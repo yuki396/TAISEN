@@ -192,7 +192,7 @@ export default function CreateCardPage() {
             )}
           </div>
 
-          {/* organizatio */}
+          {/* organization */}
           <div>
             <label className="text-sm font-medium text-gray-700">団体</label>
             <select
