@@ -122,7 +122,7 @@ export default function CreateCardPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 選手1 */}
+          {/* fighter1 */}
           <div>
             <label className="text-sm font-medium text-gray-700">選手1</label>
             <input
@@ -157,7 +157,7 @@ export default function CreateCardPage() {
             )}
           </div>
 
-          {/* 選手2 */}
+          {/* fighter2 */}
           <div>
             <label className="text-sm font-medium text-gray-700">選手2</label>
             <input
@@ -192,7 +192,7 @@ export default function CreateCardPage() {
             )}
           </div>
 
-          {/* 団体 */}
+          {/* organizatio */}
           <div>
             <label className="text-sm font-medium text-gray-700">団体</label>
             <select
@@ -208,7 +208,7 @@ export default function CreateCardPage() {
             </select>
           </div>
 
-          {/* 階級 */}
+          {/* weight */}
           <div>
             <label className="text-sm font-medium text-gray-700">階級</label>
             <select
@@ -224,7 +224,7 @@ export default function CreateCardPage() {
             </select>
           </div>
 
-          {/* プレビュー */}
+          {/* preview */}
           {selected1 && selected2 && (
             <div className="p-2 max-w-xs break-words rounded flex mt-8 space-x-2 overflow-hidden bg-gradient-to-r via-10% from-red-500 via-red-500 to-blue-500">
               <p className="w-full text-2xl font-semibold text-center">{selected1.name}</p>
