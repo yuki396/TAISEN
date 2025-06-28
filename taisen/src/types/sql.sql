@@ -29,11 +29,13 @@ CREATE TABLE public.fight_cards (
 CREATE INDEX IF NOT EXISTS idx_fight_cards_org_wc 
 ON public.fight_cards USING btree (organization_id, weight_class_id);
 
--- 同じ選手同士の順序違い対戦カードの作成禁止（順序を統一）
-CREATE UNIQUE INDEX IF NOT EXISTS ux_fight_cards_pair 
-ON public.fight_cards USING btree (
+-- 同じ選手同士（順不同）、団体、階級の対戦カードの作成禁止（順序を統一）
+CREATE UNIQUE INDEX IF NOT EXISTS ux_fight_cards_unique_match
+ON public.fight_cards (
   LEAST(fighter1_id, fighter2_id),
-  GREATEST(fighter1_id, fighter2_id)
+  GREATEST(fighter1_id, fighter2_id),
+  organization_id,
+  weight_class_id
 );
 
 -- fighters.name の検索を高速化（完全一致・前方一致）
@@ -148,6 +150,9 @@ create trigger trg_vote_delete
 after DELETE on votes for EACH row
 execute FUNCTION update_vote_counters_on_delete ();
 
+create trigger trg_check_user_vote_limit BEFORE INSERT on votes for EACH row
+execute FUNCTION check_user_popularity_vote_limit ();
+
 --------------------------------------------------
 -- 関数
 --------------------------------------------------
@@ -202,3 +207,21 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
+
+-- ユーザーの人気投票数の上限を30に設定する
+CREATE OR REPLACE FUNCTION check_user_popularity_vote_limit() RETURNS trigger AS $$
+DECLARE
+  vote_count integer;
+BEGIN
+  -- user_idかつvote_typeが'popularity'の投票数をカウント
+  SELECT COUNT(*) INTO vote_count
+  FROM votes
+  WHERE user_id = NEW.user_id AND vote_type = 'popularity';
+
+  IF vote_count >= 30 THEN
+    RAISE EXCEPTION 'User % has reached the maximum popularity vote limit of 30', NEW.user_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

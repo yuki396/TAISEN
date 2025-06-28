@@ -3,38 +3,64 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { MdPerson } from 'react-icons/md'
-import { useState, useEffect } from 'react'
-import { getCurrentUser, getProfileById} from '@/utils/supabaseFunction';
+import { useState, useEffect, useRef } from 'react'
+import { getProfileById } from '@/utils/supabaseFunction';
 import { ProfileUI } from '@/types/types';
+import { supabase } from '@/utils/supabaseBrowserClient'
+import { useRouter } from 'next/navigation'
 
 export default function Header() {
-    const [userId, setUserId] = useState<string | null>(null);
-    const [profile, setProfile] = useState<ProfileUI| null>(null)
+  const router = useRouter()  
+  const [userId, setUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileUI| null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-    const load = async () => {
-      try{
-        const userData = await getCurrentUser();
-        if (userData) setUserId(userData.id);
+  useEffect(() => {
+    // Set UserID on login/logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null)
+    })
 
-        const prof = await getProfileById(userData.id)
-        if(prof)
-        setProfile(prof)
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          console.log(e.message)
-        } else {
-          console.log('不明なエラーが発生しました')
-        }
+    // Set UserID on first mount
+    supabase.auth.getSession()
+      .then(({ data }) => setUserId(data.session?.user.id ?? null))
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setProfile(null)
+      return
+    }
+    getProfileById(userId)
+      .then(setProfile)
+      .catch(() => setProfile(null))
+  }, [userId])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
       }
     }
-    load()
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUserId(null)
+    setProfile(null)
+    setDropdownOpen(false)
+    router.push('/login') 
+  }
 
   return (
     <header className="bg-gray-800 text-white">
       <div className="container mx-auto flex items-center justify-between p-4">
-        {/* 左側：ロゴ＋ナビゲーション */}
+        {/* Logo and Navigation */}
         <div className="flex items-center space-x-8">
           <h1 className="text-2xl font-bold">
             <Link href="/">TAISEN</Link>
@@ -55,10 +81,13 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* 右側：ログイン or ユーザーアイコン */}
-        <div className="flex items-center space-x-4">
+        {/* Login or User Icon */}
+        <div className="relative inline-block" ref={dropdownRef}>
           {userId ? (
-            <Link href="/account" className="block">
+            <button
+              onClick={() => setDropdownOpen(open => !open)}
+              className="cursor-pointer focus:outline-none"
+            >
               {profile?.image_url ? (
                 <div className="w-10 h-10 rounded-full overflow-hidden">
                   <Image
@@ -73,10 +102,10 @@ export default function Header() {
               ) : (
                 <MdPerson size={40} color="#ccc" />
               )}
-            </Link>
+            </button>
           ) : (
             <>
-              <Link href="/login" className="hover:text-gray-300">
+              <Link href="/login" className="mx-2 hover:text-gray-300">
                 ログイン
               </Link>
               <Link
@@ -86,6 +115,23 @@ export default function Header() {
                 登録
               </Link>
             </>
+          )}
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg z-20">
+              <Link
+                href="/account"
+                className="block px-4 py-2 rounded hover:bg-gray-100"
+                onClick={() => setDropdownOpen(false)}
+              >
+                マイページ
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left rounded px-4 py-2 hover:bg-gray-100"
+              >
+                ログアウト
+              </button>
+            </div>
           )}
         </div>
       </div>

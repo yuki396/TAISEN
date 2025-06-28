@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabaseBrowserClient';
+import { getCurrentUser, isLoggedIn } from '@/utils/supabaseFunction';
+import { FightCardUI } from '@/types/types';
 
-type Fighter = { id: string; name: string };
-type Organization = { id: string; name: string };
-type WeightClass = { id: string; name: string };
+type Fighter = { id: number; name: string };
+type Organization = { id: number; name: string };
+type WeightClass = { id: number; name: string };
 
 export default function CreateCardPage() {
   const [fighters, setFighters] = useState<Fighter[]>([]);
@@ -22,26 +24,56 @@ export default function CreateCardPage() {
   const [selected2, setSelected2] = useState<Fighter | null>(null);
   const [open2, setOpen2] = useState(false);
 
-  const [organizationId, setOrganizationId] = useState('');
-  const [weightClassId, setWeightClassId] = useState('');
+  const [organizationId, setOrganizationId] = useState(0);
+  const [weightClassId, setWeightClassId] = useState(0);
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [fightCards, setFightCards] = useState<FightCardUI[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
+      const { data: cardsData, error: cardsError } = await supabase
+        .from("fight_cards")
+        .select(`
+          id,
+          fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name ),
+          fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name ),
+          organization:organizations!fight_cards_organization_id_fkey ( id, name ),
+          weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name ),
+          fighter1_votes,
+          fighter2_votes,
+          popularity_votes
+        `)
+
+      if (!cardsError && cardsData) {
+        const cards: FightCardUI[] = cardsData.map((v) => ({
+          id: v.id,
+          fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
+          fighter2: Array.isArray(v.fighter2) ? v.fighter2[0] ?? null : (v.fighter2 ?? null),
+          organization: Array.isArray(v.organization) ? v.organization[0] ?? null : (v.organization ?? null),
+          weight_class: Array.isArray(v.weight_class) ? v.weight_class[0] ?? null : (v.weight_class ?? null),
+          fighter1_votes: v.fighter1_votes ?? 0,
+          fighter2_votes: v.fighter2_votes ?? 0,
+          popularity_votes: v.popularity_votes ?? 0,
+        }));
+        setFightCards(cards);
+      }
+
       const { data: fData } = await supabase.from('fighters').select('id, name');
       const { data: oData } = await supabase.from('organizations').select('id, name');
       const { data: wData } = await supabase.from('weight_classes').select('id, name');
 
-      setFighters((fData || []).map(({ id, name }) => ({ id: String(id), name })));
-      setOrganizations((oData || []).map(({ id, name }) => ({ id: String(id), name })));
-      setWeightClasses((wData || []).map(({ id, name }) => ({ id: String(id), name })));
+      const fightersList = (fData || []).map(({ id, name }) => ({ id, name }));
+      const organizationsList = (oData || []).map(({ id, name }) => ({ id, name }));
+      const weightClassesList = (wData || []).map(({ id, name }) => ({ id, name }));
+      
+      setFighters(fightersList);
+      setOrganizations(organizationsList);
+      setWeightClasses(weightClassesList);
 
-      setOrganizationId(String(oData?.[0]?.id || ''));
-      setWeightClassId(String(wData?.[0]?.id || ''));
-    };
-
-    fetchData();
+      setOrganizationId(oData?.[0]?.id);
+      setWeightClassId(wData?.[0]?.id);
+    })();
   }, []);
 
   const handleChange = (
@@ -61,49 +93,82 @@ export default function CreateCardPage() {
     setOpen(true);
   };
 
+  // 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    try{
+      e.preventDefault();
 
-    if (!selected1 || !selected2) {
-      setErrorMsg('選手1と選手2を選択してください');
-      return;
-    }
+      // Confirm login
+      const session = await isLoggedIn();
+      if (!session) {
+        alert('ログインしてください')
+        return
+      };
 
-    if (!organizationId) {
-      setErrorMsg('団体を選択してください');
-      return;
-    }
+      if (!selected1 && !selected2) {
+        setErrorMsg('選手1と選手2を選択してください');
+        return;
+      } else if (!selected1){
+        setErrorMsg('選手1を選択してください');
+        return;
+      } else if (!selected2){
+        setErrorMsg('選手2を選択してください');
+        return;
+      }
 
-    if (!weightClassId) {
-      setErrorMsg('階級を選択してください');
-      return;
-    }
+      if (!organizationId) {
+        setErrorMsg('団体を選択してください');
+        return;
+      }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+      if (!weightClassId) {
+        setErrorMsg('階級を選択してください');
+        return;
+      }
 
-    if (userError || !user) {
-      setErrorMsg('ログインしていません。ログインしてください。');
-      return;
-    }
+      if(selected1?.name === selected2?.name){
+        setErrorMsg('同じ選手名を選択しています');
+        return;
+      }
 
-    setErrorMsg('');
+      const isDuplicate = fightCards.some((v) =>
+        (v.fighter1?.name === selected1?.name || v.fighter2?.name === selected1?.name)&&
+        (v.fighter1?.name === selected2?.name || v.fighter2?.name === selected2?.name) &&
+        v.organization?.id === organizationId &&
+        v.weight_class?.id === weightClassId
+      );
 
-    const { error } = await supabase.from('fight_cards').insert({
-      fighter1_id: Number(selected1.id),
-      fighter2_id: Number(selected2.id),
-      organization_id: Number(organizationId),
-      weight_class_id: Number(weightClassId),
-      created_by: user.id,
-    });
+      if (isDuplicate) {
+        setErrorMsg('選手・団体・階級が同じ対戦カードがすでに存在します');
+        return;
+      }
 
-    if (error) {
-      console.error(error);
-      setErrorMsg('カードの作成に失敗しました。');
-    } else {
-      alert('カードが作成されました');
+      setErrorMsg('');
+
+      const user = await getCurrentUser()
+      
+      const { error } = await supabase
+      .from('fight_cards')
+      .insert({
+        fighter1_id: Number(selected1?.id),
+        fighter2_id: Number(selected2?.id),
+        organization_id: Number(organizationId),
+        weight_class_id: Number(weightClassId),
+        created_by: user?.id,
+      });
+
+      if (error) {
+        console.error('Error:', JSON.stringify(error, null, 2));
+        setErrorMsg('対戦カードの作成に失敗しました。');
+      } else {
+        alert('対戦カードが作成されました');
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(e.message)
+      } else {
+        console.error('不明なエラーが発生しました')
+      }
     }
   };
 
@@ -124,7 +189,7 @@ export default function CreateCardPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* fighter1 */}
           <div>
-            <label className="text-sm font-medium text-gray-700">選手1</label>
+            <label className="font-medium text-gray-700">選手1</label>
             <input
               value={input1}
               onChange={(e) =>
@@ -159,7 +224,7 @@ export default function CreateCardPage() {
 
           {/* fighter2 */}
           <div>
-            <label className="text-sm font-medium text-gray-700">選手2</label>
+            <label className="font-medium text-gray-700">選手2</label>
             <input
               value={input2}
               onChange={(e) =>
@@ -194,11 +259,11 @@ export default function CreateCardPage() {
 
           {/* organization */}
           <div>
-            <label className="text-sm font-medium text-gray-700">団体</label>
+            <label className="font-medium text-gray-700">団体</label>
             <select
               value={organizationId}
-              onChange={(e) => setOrganizationId(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded shadow-sm"
+              onChange={(e) => setOrganizationId(Number(e.target.value))}
+              className="px-3 py-2 block w-full border-gray-300 rounded shadow-sm"
             >
               {organizations.map((o) => (
                 <option key={o.id} value={o.id}>
@@ -210,11 +275,11 @@ export default function CreateCardPage() {
 
           {/* weight */}
           <div>
-            <label className="text-sm font-medium text-gray-700">階級</label>
+            <label className="font-medium text-gray-700">階級</label>
             <select
               value={weightClassId}
-              onChange={(e) => setWeightClassId(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded shadow-sm"
+              onChange={(e) => setWeightClassId(Number(e.target.value))}
+              className="px-3 py-2 block w-full border-gray-300 rounded shadow-sm"
             >
               {weightClasses.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -226,10 +291,10 @@ export default function CreateCardPage() {
 
           {/* preview */}
           {selected1 && selected2 && (
-            <div className="p-2 max-w-xs break-words rounded flex mt-8 space-x-2 overflow-hidden bg-gradient-to-r via-10% from-red-500 via-red-500 to-blue-500">
-              <p className="w-full text-2xl font-semibold text-center">{selected1.name}</p>
+            <div className="items-center justify-center p-4 max-w-xl break-words rounded-md shadow-2xl flex mt-8 mx-30 space-x-2 overflow-hidden bg-gradient-to-r via-10% from-red-500 via-red-500 to-blue-500">
+              <p className="w-full text-3xl font-semibold text-center">{selected1.name}</p>
               <span className="flex text-2xl font-semibold items-center">vs</span>
-              <p className="w-full text-2xl font-semibold text-center">{selected2.name}</p>
+              <p className="w-full text-3xl font-semibold text-center">{selected2.name}</p>
             </div>
           )}
 

@@ -1,17 +1,9 @@
+'use client';
+
 import { supabase } from './supabaseBrowserClient';
 import type { ProfileUI } from '@/types/types';
 
-
-// For getting settion
-export const isLoggedIn = async () => {
-  const { data: sessionData, error } = await supabase.auth.getSession()
-  if (error) {
-    console.error('セッション取得エラー:', error.message)
-    return false
-  }
-  return !!sessionData.session
-}
-
+// For sign in
 export const signIn = async (email: string, password: string) => {
   return await supabase.auth.signInWithPassword({ email, password });
 };
@@ -21,12 +13,23 @@ export const signUp = async (email: string, password: string) => {
   return await supabase.auth.signUp({ email, password });
 };
 
+// For getting settion
+export const isLoggedIn = async (): Promise<boolean> => {
+  try {
+    const { data} = await supabase.auth.getSession()
+    return !!data.session
+  } catch (e: unknown) {
+    console.warn('セッション取得時に例外:', e)
+    return false
+  }
+}
+
 // For Google OAuth sign-in
 export const signInWithGoogle = async () => {
   const data = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/account`,
+      redirectTo: `${window.location.origin}/`,
     }
   });
   return data;
@@ -34,14 +37,17 @@ export const signInWithGoogle = async () => {
 
 // For getting user info
 export const getCurrentUser = async () => {
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data) throw new Error('ユーザー情報の取得に失敗しました')
-  return data.user
+  try {
+    const { data } = await supabase.auth.getUser()
+    return data.user 
+  } catch (e: unknown) {
+    console.error('ユーザー取得時に例外:', e)
+    return null
+  }
 }
 
 // For getting user pofile info 
 export const getProfileById = async (id: string): Promise<ProfileUI> => {
-  console.log("id：", id)
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -52,14 +58,10 @@ export const getProfileById = async (id: string): Promise<ProfileUI> => {
 }
 
 // For updatting profile
-export const updateProfile = async (
-  id: string,
-  update: Partial<Pick<ProfileUI, 'username' | 'image_url'>>
-) => {
+export const updateProfile = async ( id: string, update: Partial<Pick<ProfileUI, 'username' | 'image_url'>>) => {
   const { error } = await supabase
     .from('profiles')
     .update(update)
     .eq('id', id)
-
   if (error) throw new Error('プロフィールの更新に失敗しました')
 }

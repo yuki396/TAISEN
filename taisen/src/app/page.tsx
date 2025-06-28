@@ -70,7 +70,7 @@ export default async function Home() {
   
   return (
     <div>
-      <FilterPanel initialFightCards={cards} initialVotes={votes}/>
+      <FilterPanel initialFightCards={cards} initialVotedCards={votes}/>
     </div>
   );
 }

@@ -9,8 +9,8 @@ import { FightCardUI, VoteCardUI } from '@/types/types';
 
 
 export default function FilterPanel({ initialFightCards, initialVotedCards }: { initialFightCards: FightCardUI[], initialVotedCards: VoteCardUI[];}) {
-  const [weight, setWeight] = useState("階級なし");
-  const [organization, setOrganization] = useState("団体なし");
+  const [weight, setWeight] = useState("指定なし");
+  const [organization, setOrganization] = useState("指定なし");
   const [keyword, setKeyword] = useState("");
 
   return (

@@ -54,7 +54,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-96">
+      <div className="bg-white p-5 rounded shadow-md w-96 mx-10">
         <h2 className="text-2xl font-bold mb-2 text-center">新規アカウント登録</h2>
         <p className="text-center text-gray-600 mb-6">メールアドレスまたはGoogleアカウントで登録</p>
 
@@ -77,7 +77,6 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium mb-1">パスワード</label>
             <input
               type="password"
-              placeholder="********"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -90,7 +89,6 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium mb-1">パスワード（確認）</label>
             <input
               type="password"
-              placeholder="********"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -110,7 +108,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white py-2 rounded cursor-pointer hover:bg-blue-700 transition"
           >
             アカウントを作成
           </button>
@@ -120,14 +118,13 @@ export default function RegisterPage() {
 
         <button
           onClick={handleGoogle}
-          className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition flex items-center justify-center"
-        >
-          <FaGoogle className="mr-2" />Googleで登録
+          className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition flex items-center justify-center cursor-pointer">
+          <FaGoogle className="mr-2"/>Googleで登録
         </button>
 
-        <div className="mt-4 text-center text-sm">
+        <div className="mt-4 text-center text-sm cursor-pointer">
           すでにアカウントをお持ちの場合は{' '}
-          <a href="/login" className="text-blue-600 hover:underline">ログイン</a>
+          <a href="/login" className="text-blue-600 cursor-pointer hover:underline">ログイン</a>
         </div>
       </div>
     </div>

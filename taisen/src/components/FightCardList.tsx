@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import VoteGauge from "./VoteGauge";
 import { MdHowToVote } from "react-icons/md";
 import { supabase } from '@/utils/supabaseBrowserClient';
 import { FightCardUI, VoteCardUI } from '@/types/types';
-import { getCurrentUser } from '@/utils/supabaseFunction'
+import { getCurrentUser, isLoggedIn } from '@/utils/supabaseFunction'
 
 // For returning background style according to rank
 const getRankStyle = (rank: number) => {
@@ -127,141 +127,207 @@ const FightCardList = ({ initialFightCards, initialVotedCards, organization, wei
     }
   }, [filteredCards]);
 
+  // Reorder fightCards based on popularity votes
+  const sortedFilteredCards = useMemo(() => {
+    return [...filteredCards].sort(
+      (a, b) => (b.popularity_votes ?? 0) - (a.popularity_votes ?? 0)
+    );
+  }, [filteredCards]);
+
+  const top3 = sortedFilteredCards.slice(0, 3);
+  const others = sortedFilteredCards.slice(3, 10);
 
   // For checking if user has voted for popularity
   const handlePredictionVote = async(cardId: number, votedSide: 1 | 2) => {
-    const user = await getCurrentUser();
-    if (!user?.id)  {
-      alert("ログインしてください");
-      return;
-    }
+    try {
+      // Confirm login
+      const session = await isLoggedIn();
+      if (!session) {
+        alert('ログインしてください')
+        return
+      };
 
-   // Get prediction vote data from userID
-   const { data: existingVoteData, error: fetchError } = await supabase
-    .from("votes")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("fight_card_id", cardId)
-    .eq("vote_type", "prediction")
-    .maybeSingle();
-
-    if (fetchError) {
-      console.error("投票チェックに失敗", fetchError);
-      return;
-    }
-
-    // Check if you've already voted
-    if (existingVoteData) {
-      // Delete prediction vote data from votes table
-      const { error: deleteError } = await supabase
+      // Get prediction vote data from userID
+      const { data: existingVoteData, error: fetchError } = await supabase
         .from("votes")
-        .delete()
-        .eq("id", existingVoteData.id);
+        .select("id")
+        .eq("user_id", userId)
+        .eq("fight_card_id", cardId)
+        .eq("vote_type", "prediction")
+        .maybeSingle();
 
-      if (deleteError) {
-        console.error("投票削除に失敗", deleteError);
-      } else {
-        console.log("投票をキャンセルしました");
-        setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
-      }
-    } else {
-      // Insert prediction vote data from votes table
-      const { data: voteData, error: insertError } = await supabase
-      .from("votes")
-      .insert({
-        user_id: userId,
-        fight_card_id: cardId,
-        vote_type: "prediction",
-        vote_for: votedSide,
-      })
-      .select()
-      .single();
-
-      if (insertError) {
-        if (insertError.code === "23505") {
-          console.warn("すでに投票済みです");
-        } else {
-          console.error("投票に失敗しました", insertError);
+        if (fetchError) {
+          console.error("投票チェックに失敗", fetchError);
+          return;
         }
-      } else if(voteData) {
-        setVotedCards((prev) => [...prev, voteData]);
-        console.log("投票完了");
+
+      // Check if you've already voted
+      if (existingVoteData) {
+        // Delete prediction vote data from votes table
+        const { error: deleteError } = await supabase
+          .from("votes")
+          .delete()
+          .eq("id", existingVoteData.id);
+
+        if (deleteError) {
+          console.error("投票削除に失敗", deleteError);
+        } else {
+          console.log("投票をキャンセルしました");
+          setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
+          setFightCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    fighter1_votes:
+                      votedSide === 1 ? Math.max(c.fighter1_votes - 1, 0) : c.fighter1_votes,
+                    fighter2_votes:
+                      votedSide === 2 ? Math.max(c.fighter2_votes - 1, 0) : c.fighter2_votes,
+                  }
+                : c
+            )
+          );
+        }
+      } else {
+        // Insert prediction vote data from votes table
+        const { data: voteData, error: insertError } = await supabase
+        .from("votes")
+        .insert({
+          user_id: userId,
+          fight_card_id: cardId,
+          vote_type: "prediction",
+          vote_for: votedSide,
+        })
+        .select()
+        .single();
+
+        if (insertError) {
+          if (insertError.code === "23505") {
+            console.warn("すでに投票済みです");
+          } else {
+            console.error("投票に失敗しました", insertError);
+          }
+        } else if(voteData) {
+          console.log("投票完了");
+          setVotedCards((prev) => [...prev, voteData]);
+          setFightCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    fighter1_votes:
+                      votedSide === 1 ? c.fighter1_votes + 1 : c.fighter1_votes,
+                    fighter2_votes:
+                      votedSide === 2 ? c.fighter2_votes + 1 : c.fighter2_votes,
+                  }
+                : c
+            )
+          );
+        }
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        alert(e.message)
+      } else {
+        alert('不明なエラーが発生しました')
       }
     }
   }
 
   // For haandling popularity vote
   const handlePopularityVote = async(cardId: number) => {
-    const user = await getCurrentUser();
-    if (!user?.id)  {
-      alert("ログインしてください");
-      return;
-    }
+    try{
+      // Confirm login
+      const session = await isLoggedIn();
+      if (!session) {
+        alert('ログインしてください')
+        return
+      };
 
-    // Get popularity vote data from userID
-    const { data: existingVoteData, error: fetchError } = await supabase
-      .from("votes")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("fight_card_id", cardId)
-      .eq("vote_type", "popularity")
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error("投票チェックに失敗", fetchError);
-      return;
-    }
-
-    // Check if you've already voted
-    if (existingVoteData) {
-      // Delete popularity vote data from votes table
-      const { error: deleteError } = await supabase
+      // Get popularity vote data from userID
+      const { data: existingVoteData, error: fetchError } = await supabase
         .from("votes")
-        .delete()
-        .eq("id", existingVoteData.id);
-
-      if (deleteError) {
-        console.error("投票削除に失敗", deleteError);
-      } else {
-        // 
-        setFightCards(prev =>
-          prev.map(c =>
-            c.id === cardId
-              ? { ...c, popularity_votes: Math.max((c.popularity_votes ?? 1) - 1, 0) }
-              : c
-          )
-        );
-        setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
-        console.log("投票をキャンセルしました");
+        .select("id")
+        .eq("user_id", userId)
+        .eq("fight_card_id", cardId)
+        .eq("vote_type", "popularity")
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error("投票チェックに失敗", fetchError);
+        return;
       }
-    } else {
-      // Insert popularity vote data from votes table
-      const { data: voteData, error: insertError } = await supabase
-      .from("votes")
-      .insert({
-        user_id: userId,
-        fight_card_id: cardId,
-        vote_type: "popularity",
-      })
-      .select()
-      .single();
 
-      if (insertError) {
-        if (insertError.code === "23505") {
-          console.warn("すでに投票済みです");
+      // ── ここで「人気投票」の投票済み件数をカウント
+      const popularityCount = votedCards.filter(v => v.vote_type === "popularity").length;
+
+      if (!existingVoteData && popularityCount >= 30) {
+        alert("人気投票は30件までです。");
+        return;
+      }
+      // Check if you've already voted
+      if (existingVoteData) {
+
+        // Delete popularity vote data from votes table
+        const { error: deleteError } = await supabase
+          .from("votes")
+          .delete()
+          .eq("id", existingVoteData.id);
+
+        if (deleteError) {
+          console.error("投票削除に失敗", deleteError);
         } else {
-          console.error("投票に失敗しました", insertError);
+          console.log("投票をキャンセルしました");
+          setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
+          setFightCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    popularity_votes: Math.max((c.popularity_votes ?? 1) - 1, 0),
+                  }
+                : c
+            )
+          );
         }
-      } else if (voteData) {
-        setFightCards(prev =>
-          prev.map(c =>
-            c.id === cardId
-              ? { ...c, popularity_votes: Math.max((c.popularity_votes ?? 1) + 1, 0) }
-              : c
-          )
-        );
-        setVotedCards((prev) => [...prev, voteData]);
-        console.log("投票完了");
+      } else {
+        // Insert popularity vote data from votes table
+        const { data: voteData, error: insertError } = await supabase
+        .from("votes")
+        .insert({
+          user_id: userId,
+          fight_card_id: cardId,
+          vote_type: "popularity",
+        })
+        .select()
+        .single();
+
+        if (insertError) {
+          if (insertError.code === "23505") {
+            console.warn("すでに投票済みです");
+          } else {
+            console.error("投票に失敗しました", insertError);
+          }
+        } else if (voteData) {
+          console.log("投票完了");
+          setVotedCards((prev) => [...prev, voteData]);
+          setFightCards((prev) =>
+            prev.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    popularity_votes: (c.popularity_votes ?? 0) + 1,
+                  }
+                : c
+            )
+          );
+        }
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        alert(e.message)
+      } else {
+        alert('不明なエラーが発生しました')
       }
     }
   };
@@ -299,11 +365,13 @@ const FightCardList = ({ initialFightCards, initialVotedCards, organization, wei
     );
   };
 
+  if (!fightCards) return <div>Loading...</div>;
+
   return (
     <div className="space-y-3 mt-8 px-5">
       {/* Top 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {filteredCards.slice(0, 3).map((card, idx) => {
+        {top3.map((card, idx) => {
           const [leftPct, rightPct] = calcPercent(card.fighter1_votes, card.fighter2_votes);
           const votedPrediction = predictionVoteFor(card.id);
           const popVoted = !!isPopularityVoted(card.id);
@@ -336,8 +404,8 @@ const FightCardList = ({ initialFightCards, initialVotedCards, organization, wei
                 </button>
               </div>
               <div className="flex mt-5 gap-2">
-                <span className="text-black bg-gray-100 rounded px-1 py-1">{card.organization?.name}</span>
-                <span className="text-black bg-gray-100 rounded px-1 py-1">{card.weight_class?.name}</span>
+                <span className="bg-gray-100 rounded px-1 py-1 whitespace-nowrap">{card.organization?.name}</span>
+                <span className="bg-gray-100 rounded px-1 py-1 whitespace-nowrap">{card.weight_class?.name}</span>
               </div>
               <div className="grid mt-6">
                 <span>勝敗予想</span>
@@ -362,8 +430,8 @@ const FightCardList = ({ initialFightCards, initialVotedCards, organization, wei
       </div>
 
       {/* Under 4 */}
-      <div className="space-y-4 mt-9">
-        {filteredCards.slice(3).map((card, idx) => {
+      <div className="space-y-6 mt-9">
+        {others.map((card, idx) => {
           const [leftPct, rightPct] = calcPercent(card.fighter1_votes, card.fighter2_votes);
           const votedPrediction = predictionVoteFor(card.id);
           const popVoted = !!isPopularityVoted(card.id);
@@ -371,48 +439,52 @@ const FightCardList = ({ initialFightCards, initialVotedCards, organization, wei
           return (
             <div
               key={card.id}
-              className="relative rounded-lg px-6 py-2 grid grid-cols-1 md:grid-cols-12 md:gap-4 
+              className="relative rounded-lg flex flex-col px-10 pt-10 pb-5 md:px-0 md:py-0 md:grid md:grid-cols-12 md:grid-rows-12 
                           shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                           hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
             >
               <div className={`absolute top-2 left-2 px-2 py-1 rounded text-sm font-bold ${getRankStyle(idx + 4)}`}>
                 {idx + 4}位
               </div>
-              <div className="flex space-x-8 mt-8 md:col-span-5 md:row-start-1">
-                <button className={`text-lg font-semibold cursor-pointer ${votedPrediction === 1 ? "bg-gray-200" : ""}`} onClick={() => handlePredictionVote(card.id, 1)}>
+              <div className="flex md:space-x-7 md:px-10 md:row-start-5 md:row-end-9 md:col-start-1 md:col-end-6">
+                <button className={`text-xl font-semibold cursor-pointer rounded ${votedPrediction === 1 ? "border-2 border-red-300 bg-red-50 p-2" : "border border-transparent hover:border-red-300 p-2"}`} onClick={() => handlePredictionVote(card.id, 1)}>
                   {card.fighter1?.name}
                 </button>
                 <span className="flex text-xl font-semibold items-center">vs</span>
-                <button className={`text-lg font-semibold cursor-pointer ${votedPrediction === 2 ? "bg-gray-200" : ""}`} onClick={() => handlePredictionVote(card.id, 2)}>
+                <button className={`text-xl font-semibold cursor-pointer rounded ${votedPrediction === 2 ? "border-2 border-blue-300 bg-blue-50 p-2" : "border border-transparent hover:border-blue-300 p-2"}`} onClick={() => handlePredictionVote(card.id, 2)}>
                   {card.fighter2?.name}
                 </button>
               </div>
-              <div className="md:col-span-3 flex items-center justify-around text-sm">
-                <span className="bg-gray-100 px-2 py-1 rounded">{card.organization?.name}</span>
-                <span className="bg-gray-100 px-2 py-1 rounded">{card.weight_class?.name}</span>
+              <div className="flex pt-4 md:pt-0 md:order-none md:row-start-9 md:row-end-12 md:col-start-1 md:col-end-6">
+                <div className="flex items-center justify-between space-x-2 px-0 md:px-10">
+                  <span className="bg-gray-100 rounded whitespace-nowrap p-1">{card.organization?.name}</span>
+                  <span className="bg-gray-100 rounded whitespace-nowrap p-1">{card.weight_class?.name}</span>
+                </div>
               </div>
-              <div className="md:col-span-12 mt-1">
-                <div className="flex justify-between text-xs text-gray-700">
+              <div className="pt-3 md:pt-0 md:order-none md:row-start-5 md:row-end-10 md:col-start-6 md:col-end-12">
+                <div className="flex text-xs justify-between text-gray-700">
                   <span>{leftPct}%</span>
                   <span>{rightPct}%</span>
                 </div>
                 <VoteGauge leftVotes={card.fighter1_votes} rightVotes={card.fighter2_votes} />
               </div>
-              <div className="flex items-center space-x-1 cursor-pointer mt-3" onClick={() => handlePopularityVote(card.id)}>
-                <MdHowToVote size={24} />
-                <span className="text-sm text-gray-600">{card.popularity_votes}</span>
-              </div>
-              {popVoted && (
-                <div className="mt-2 font-bold text-sm">
-                  投票済み
+              <div className="flex pt-3 md:pt-0  md:order-none md:row-start-10 md:row-end-12 md:col-start-6 md:col-end-12">
+                <div className="flex space-x-2 cursor-pointer md:items-center md:justify-between" onClick={() => handlePopularityVote(card.id)}>
+                  <MdHowToVote size={24} />
+                  <span className="text-sm text-gray-600">{card.popularity_votes}</span>
+                  {popVoted && (
+                    <div className="text-sm font-bold whitespace-nowrap">
+                      投票済み
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
       </div>
       <div className="text-center mt-8">
-        <Link href="/allrankings" className="inline-block px-4 py-2 text-gray-500 hover:text-blue-800">
+        <Link href="/allrankings" className="inline-block px-4 py-2 text-gray-500 cursor-pointer hover:text-blue-800">
           10位以降のランキングを見る
         </Link>
       </div>

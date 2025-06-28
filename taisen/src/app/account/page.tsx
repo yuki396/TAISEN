@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { isLoggedIn, getCurrentUser, getProfileById, updateProfile } from '@/utils/supabaseFunction'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/utils/supabaseBrowserClient'
 import { MdPerson } from 'react-icons/md'
 import { ProfileUI, FightCardUI} from '@/types/types';
 
 export default function AccountPage() {
-  const router = useRouter()
   const [profile, setProfile] = useState<ProfileUI | null>(null)
   const [form, setForm] = useState({ username: '', image_url: ''})
   const [loading, setLoading] = useState(true)
@@ -18,14 +16,16 @@ export default function AccountPage() {
   const [oldImagePath, setoldImagePath] = useState<string | null>(null)
   const [showVoted, setShowVoted] = useState(false)
   const [votedCards, setVotedCards] = useState<FightCardUI[]>([])
+  const [selectedCardIds, setSelectedCardIds] = useState<number[]>([])
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     // For getting and display profile info
-    const load = async () => {
-      //Display Loading 
-      setLoading(true)
-
+    (async () => {
       try {
+        //Display Loading
+        setLoading(true)
+
         // Confirm login
         const loggedIn = await isLoggedIn()
         if (loggedIn) {
@@ -35,28 +35,30 @@ export default function AccountPage() {
         }
 
         // Get user info
-        const userData = await getCurrentUser();
+        const user = await getCurrentUser();
+        if (user) setUserId(user.id);
 
         //Get user profile info
-         const prof = await getProfileById(userData.id)
+        if (user){
+          const prof = await getProfileById(user.id)
 
-        // Set user profile info
-        setProfile(prof)
+          // Set user profile info
+          setProfile(prof);
 
-        // Set user profile info to profle page
-        setForm({
-          username: prof.username,
-          image_url: prof.image_url ?? ''
-        })
+          // Set user profile info to profle page
+          setForm({
+            username: prof.username ?? '',
+            image_url: prof.image_url ?? ''
+          });
 
-        // Get image file name
-        if (prof.image_url) {
-          const pathMatch = prof.image_url.match(/\/storage\/v1\/object\/public\/profile\/(.+)$/)
-          if (pathMatch) {
-            setoldImagePath(pathMatch[1])
-          }
-        }
-
+          // Get image file name
+          if (prof.image_url) {
+            const pathMatch = prof.image_url.match(/\/storage\/v1\/object\/public\/profile\/(.+)$/)
+            if (pathMatch) {
+              setoldImagePath(pathMatch[1])
+            }
+          };
+        };
       } catch (e: unknown) {
         if (e instanceof Error) {
           setError(e.message)
@@ -65,11 +67,9 @@ export default function AccountPage() {
         }
       } finally {
         setLoading(false)
-      }
-    }
-
-    load()
-  }, [])
+      };
+    })();
+  }, []);
 
   // For uploading image 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,8 +80,6 @@ export default function AccountPage() {
     const file = e.target.files[0] //Get the file name
     const fileExt = file.name.split('.').pop() // Get the extension
     const uniqueFileName = `${crypto.randomUUID()}.${fileExt}` // Generate file name by adding UUID and extension
-    const user = await getCurrentUser()
-    const userId = user.id
     const filePath = `${userId}/${uniqueFileName}` // Generate file path by adding userID and new file name
 
     try {
@@ -123,63 +121,73 @@ export default function AccountPage() {
   
   // For getting a list of matches predicted by logged-in users
   const fetchVotedCards = async () => {
-    // Get current userData
-    const userData = await getCurrentUser()
+    try {
+      // Get current userData
+      const user = await getCurrentUser()
+      
+      if (user) {
+        // Get voted fight card ids
+        const { data: voteData, error: voteError } = await supabase
+          .from('votes')
+          .select(`fight_card_id`)
+          .eq('user_id', user.id)
+          .eq('vote_type', 'popularity')
+        
+        if (voteError) {
+          console.error('投票済み対戦カードID取得エラー', error)
+          return
+        }
 
-    // Get voted fight card ids
-    const { data: voteData, error: voteError } = await supabase
-      .from('votes')
-      .select(`fight_card_id`)
-      .eq('user_id', userData.id)
-      .eq('vote_type', 'popularity')
-    
-    if (voteError) {
-      console.error('投票済み対戦カードID取得エラー', error)
-      return
-    }
+        // Change ids to array
+        const fightCardIds = voteData.map(v => v.fight_card_id)
 
-    // Change ids to array
-    const fightCardIds = voteData.map(v => v.fight_card_id)
+        // 
+        const { data: cardsData, error: cardsError } = await supabase
+          .from("fight_cards")
+          .select(`
+            id,
+            fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name ),
+            fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name ),
+            organization:organizations!fight_cards_organization_id_fkey ( id, name ),
+            weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name ),
+            fighter1_votes,
+            fighter2_votes,
+            popularity_votes
+          `)
+          .in('id', fightCardIds)
+          .order("popularity_votes", { ascending: false })
 
-    // 
-    const { data: cardsData, error: cardsError } = await supabase
-      .from("fight_cards")
-      .select(`
-        id,
-        fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name ),
-        fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name ),
-        organization:organizations!fight_cards_organization_id_fkey ( id, name ),
-        weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name ),
-        fighter1_votes,
-        fighter2_votes,
-        popularity_votes
-      `)
-      .in('id', fightCardIds)
-      .order("popularity_votes", { ascending: false })
+          if (cardsError) {
+            console.error('投票済み対戦カード取得エラー', error)
+            return
+          }
 
-      if (cardsError) {
-        console.error('投票済み対戦カード取得エラー', error)
-        return
+        if (!cardsError && cardsData) {
+          const votedCards: FightCardUI[] = cardsData.map((v) => ({
+            id: v.id,
+            fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
+            fighter2: Array.isArray(v.fighter2) ? v.fighter2[0] ?? null : (v.fighter2 ?? null),
+            organization: Array.isArray(v.organization) ? v.organization[0] ?? null : (v.organization ?? null),
+            weight_class: Array.isArray(v.weight_class) ? v.weight_class[0] ?? null : (v.weight_class ?? null),
+            fighter1_votes: v.fighter1_votes ?? 0,
+            fighter2_votes: v.fighter2_votes ?? 0,
+            popularity_votes: v.popularity_votes ?? 0,
+          }));
+          setVotedCards(votedCards)
+        }
       }
-
-    if (!cardsError && cardsData) {
-      const votedCards: FightCardUI[] = cardsData.map((v) => ({
-        id: v.id,
-        fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
-        fighter2: Array.isArray(v.fighter2) ? v.fighter2[0] ?? null : (v.fighter2 ?? null),
-        organization: Array.isArray(v.organization) ? v.organization[0] ?? null : (v.organization ?? null),
-        weight_class: Array.isArray(v.weight_class) ? v.weight_class[0] ?? null : (v.weight_class ?? null),
-        fighter1_votes: v.fighter1_votes ?? 0,
-        fighter2_votes: v.fighter2_votes ?? 0,
-        popularity_votes: v.popularity_votes ?? 0,
-      }));
-      setVotedCards(votedCards)
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message)
+      } else {
+        setError('不明なエラーが発生しました')
+      }
     }
   };
 
   const handleUpdate = async () => {
-    setError('')
     try {
+      setError('')
       if (profile) {
         await updateProfile(profile.id, {
           username: form.username,
@@ -187,7 +195,6 @@ export default function AccountPage() {
         })
         setProfile({ ...profile, username: form.username, image_url: form.image_url})
       }
-
       setEditing(false)
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -198,13 +205,34 @@ export default function AccountPage() {
     }
   }
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error('ログアウトに失敗しました:', error.message)
-      return
+  // For deleting votes
+  const handleVoteDelete = async () => {
+    if (!userId || selectedCardIds.length === 0) return
+
+    try {
+      const { error } = await supabase
+        .from('votes')
+        .delete()
+        .match({ user_id: userId, vote_type: 'popularity' })
+        .in('fight_card_id', selectedCardIds)
+
+      if (error) {
+        console.error('削除エラー', error)
+        return
+      }
+
+      await fetchVotedCards()
+      setSelectedCardIds([])
+    } catch (e) {
+      console.error('削除失敗', e)
     }
-    router.push('/login')
+  }
+
+  // For toggling card selection
+  const toggleCardSelect = (id: number) => {
+    setSelectedCardIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    )
   }
 
   if (loading) return <div className="p-4 text-center">読み込み中...</div>
@@ -214,7 +242,6 @@ export default function AccountPage() {
       <main className="flex-1 p-6">
         <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
           <h2 className="text-xl font-bold border-b pb-2">アカウント情報</h2>
-
           {!editing && profile && (
             <>
               <div className="flex justify-center">
@@ -240,26 +267,19 @@ export default function AccountPage() {
 
               <div className="text-right space-x-2">
                 <button
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700"
                   onClick={() => setEditing(true)}
                 >
                   編集
                 </button>
                 <button
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                  onClick={handleSignOut}
-                >
-                  ログアウト
-                </button>
-                <button
                   onClick={async () => {
-                    // state トグル
                     if (!showVoted) {
                       await fetchVotedCards()
                     }
                     setShowVoted(!showVoted)
                   }}
-                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700"
                 >
                   投票済みカード
                 </button>
@@ -277,43 +297,58 @@ export default function AccountPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
-                      {votedCards.map((card) => (
-                        <div
-                          key={card.id}
-                          className="bg-white rounded-lg px-6 py-3 shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
-                        >
-                          <div className="grid grid-cols-1">
-                            <div className="flex space-x-4">
-                              <div className="text-xl font-semibold">
-                                {card.fighter1?.name}
+                      {votedCards.map((card) => {
+                        return (
+                          <button
+                            key={card.id}
+                            onClick={() => toggleCardSelect(card.id)}
+                            className={`p-4 border rounded-lg shadow border-gray-200 bg-gray-50 transition-colors 
+                                        ${selectedCardIds.includes(card.id) ? 'bg-red-100 border-red-300' : ''}`}
+                          >
+                            <div className="grid grid-cols-1">
+                              <div className="flex space-x-4">
+                                <div className="text-xl font-semibold">
+                                  {card.fighter1?.name}
+                                </div>
+                                <span className="text-xl font-semibold">vs</span>
+                                <div className="text-xl font-semibold">
+                                  {card.fighter2?.name}
+                                </div>
                               </div>
-                              <span className="text-xl font-semibold">vs</span>
-                              <div className="text-xl font-semibold">
-                                {card.fighter2?.name}
+                              <div className="flex space-x-4">
+                                <div className="flex space-x-4 mt-3">
+                                  <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                    {card.organization?.name}
+                                  </span>
+                                  <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                    {card.weight_class?.name}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex space-x-4">
-                              <div className="flex space-x-4 mt-3">
-                                <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                  {card.organization?.name}
-                                </span>
-                                <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                  {card.weight_class?.name}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          </button>
+                        )
+                      })}
                     </div>
                   )
                 }
-                <button
-                  onClick={() => {setShowVoted(false)}}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                >
-                  閉じる
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {setShowVoted(false)}}
+                    className="px-4 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300"
+                  >
+                    閉じる
+                  </button>
+                  {selectedCardIds.length > 0 && (
+                    <button 
+                      onClick={handleVoteDelete} 
+                      className={`px-4 py-2 bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 
+                                  ${selectedCardIds.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      投票を取り消す
+                    </button>
+                  )} 
+                </div> 
               </div>
             </div>
           )}
@@ -358,13 +393,13 @@ export default function AccountPage() {
                       })
                       setError('')
                     }}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                    className="px-4 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300"
                   >
                     キャンセル
                   </button>
                   <button
                     onClick={handleUpdate}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700"
                   >
                     保存
                   </button>
