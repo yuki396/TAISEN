@@ -373,14 +373,14 @@ export default function AccountPage() {
                   type="text"
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  className="w-full border px-3 py-2 rounded"
+                  className="w-full border px-3 py-2 rounded cursor-pointer"
                 />
                 <label className="block text-sm font-medium">アイコン画像</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="w-full border px-3 py-2 rounded"
+                  className="w-full border px-3 py-2 rounded cursor-pointer"
                 />
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div className="flex justify-end space-x-2 pt-2">
