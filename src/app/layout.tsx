@@ -18,11 +18,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="icon" href="/logo.png" />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen bg-white text-black`}>
-        <Header />
+        {/* <Header /> */}
         <main className="container mx-auto flex-grow px-4 py-8">
           {children}
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </body>
     </html>
   );
