@@ -73,7 +73,7 @@ export default function Header() {
             />
             <Link href="/">TAISEN</Link>
           </h1>
-          <nav aria-label="Main navigation">
+          {/* <nav aria-label="Main navigation">
             <ul className="flex space-x-4">
               <li>
                 <Link href="/" className="hover:text-gray-300">
@@ -86,11 +86,11 @@ export default function Header() {
                 </Link>
               </li>
             </ul>
-          </nav>
+          </nav> */}
         </div>
 
         {/* Login or User Icon */}
-        <div className="relative inline-block" ref={dropdownRef}>
+        {/* <div className="relative inline-block" ref={dropdownRef}>
           {userId ? (
             <button
               onClick={() => setDropdownOpen(open => !open)}
@@ -141,7 +141,7 @@ export default function Header() {
               </button>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </header>
   )
