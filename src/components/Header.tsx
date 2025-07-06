@@ -62,7 +62,15 @@ export default function Header() {
       <div className="container mx-auto flex items-center justify-between p-4">
         {/* Logo and Navigation */}
         <div className="flex items-center space-x-8">
-          <h1 className="text-2xl font-bold">
+          <h1 className="flex text-2xl items-center font-bold">
+            <Image
+              src="/logo.png"
+              alt="TAISEN Logo"
+              width={30}
+              height={30}
+              className="inline-block mr-2"
+              priority
+            />
             <Link href="/">TAISEN</Link>
           </h1>
           <nav aria-label="Main navigation">
