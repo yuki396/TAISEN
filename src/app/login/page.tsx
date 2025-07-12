@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded shadow-md w-96">
         <h2 className="text-2xl font-bold mb-6 text-center ">ログイン</h2>
-        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+        {error && <p className="text-red-500 mb-4 text-center">エラー：”{error}”</p>}
 
         <form onSubmit={handleEmailLogin}>
           <div className="mb-4">
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
         <div className="mt-2 text-center">
           <span className="text-sm">アカウントをお持ちでない場合は </span>
-          <Link href="/register" className="text-sm text-blue-600 cursor-pointer hover:underline">
+          <Link href="/signup" className="text-sm text-blue-600 cursor-pointer hover:underline">
             新規登録
           </Link>
         </div>

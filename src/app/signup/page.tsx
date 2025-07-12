@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { FaGoogle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { signUp, signInWithGoogle } from '@/utils/supabaseFunction';
@@ -58,7 +59,7 @@ export default function RegisterPage() {
         <h2 className="text-2xl font-bold mb-2 text-center">新規アカウント登録</h2>
         <p className="text-center text-gray-600 mb-6">メールアドレスまたはGoogleアカウントで登録</p>
 
-        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+        {error && <p className="text-red-500 mb-4 text-center">エラー："{error}"</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">メールアドレス</label>
@@ -70,7 +71,7 @@ export default function RegisterPage() {
               className="w-full border border-gray-300 px-3 py-2 rounded"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">メールアドレスの@より前の部分がユーザーIDとして使用されます</p>
+            <p className="text-xs text-gray-500 mt-1">メールアドレスの@より前の部分がデフォルトのユーザーIDとして使用されます</p>
           </div>
 
           <div className="mb-4">
@@ -103,7 +104,10 @@ export default function RegisterPage() {
               onChange={(e) => setAgree(e.target.checked)}
               className="mr-2"
             />
-            <span className="text-sm">利用規約とプライバシーポリシーに同意する</span>
+            <span className="text-sm">
+              <Link href="/terms" className="text-blue-600 cursor-pointer hover:underline">利用規約</Link>と{' '}
+              <Link href="/privacy" className="text-blue-600 cursor-pointer hover:underline">プライバシーポリシー</Link>に同意する
+            </span>
           </div>
 
           <button

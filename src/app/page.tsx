@@ -69,9 +69,8 @@ export default async function Home() {
   }
   
   return (
-    <div className="container mx-auto text-2xl px-4 py-8">
-      メンテナンス中です
-      {/* <FilterPanel initialFightCards={cards} initialVotedCards={votes}/> */}
+    <div>
+      <FilterPanel initialFightCards={cards} initialVotedCards={votes}/>
     </div>
   );
 }

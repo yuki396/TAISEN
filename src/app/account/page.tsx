@@ -382,7 +382,7 @@ export default function AccountPage() {
                   onChange={handleImageUpload}
                   className="w-full border px-3 py-2 rounded cursor-pointer"
                 />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && <p className="text-red-500 text-center">エラー："{error}"</p>}
                 <div className="flex justify-end space-x-2 pt-2">
                   <button
                     onClick={() => {

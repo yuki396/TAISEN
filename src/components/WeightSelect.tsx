@@ -1,14 +1,14 @@
 const WEIGHTS = [
   '指定なし',
   '階級なし',
-  '77KG',
-  '71KG',
-  '67.5KG',
-  '64KG',
-  '61KG',
-  '58KG',
-  '55KG',
-  '53KG',
+  '-77KG',
+  '-71KG',
+  '-67.5KG',
+  '-64KG',
+  '-61KG',
+  '-58KG',
+  '-55KG',
+  '-53KG',
 ];
 
 const WeightSelect = ({ value, onChange }: { value: string; onChange: (newWeight: string) => void }) => {
