@@ -5,6 +5,12 @@
   --foreground: #171717;
 }
 
+/* Intended after "・" */
+.indented-li {
+  text-indent: -1.2em;
+  padding-left: 1.2em; 
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
