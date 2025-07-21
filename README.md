@@ -1,2 +1,2 @@
-# install library
+# Install library
 npm install react-hot-toast
