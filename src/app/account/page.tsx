@@ -1,11 +1,11 @@
 'use client'
-
-import { useEffect, useState } from 'react'
-import { isLoggedIn, getCurrentUser, getProfileById, updateProfile } from '@/utils/supabaseFunction'
-import Image from 'next/image'
-import { supabase } from '@/utils/supabaseBrowserClient'
-import { MdPerson } from 'react-icons/md'
+import { useEffect, useState } from 'react';
+import { isLoggedIn, getCurrentUser, getProfileById, updateProfile } from '@/utils/supabaseUtils';
+import Image from 'next/image';
+import { supabase } from '@/utils/supabaseBrowserClient';
+import { MdPerson, MdEdit, MdViewList, MdUpload, MdCancel } from 'react-icons/md';
 import { ProfileUI, FightCardUI} from '@/types/types';
+import { isSmallFont, insertLineBreak, noBreakDots } from '@/utils/textUtils';
 
 export default function AccountPage() {
   const [profile, setProfile] = useState<ProfileUI | null>(null)
@@ -20,10 +20,9 @@ export default function AccountPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // For getting and display profile info
     (async () => {
       try {
-        //Display Loading
+        // Display Loading
         setLoading(true)
 
         // Confirm login
@@ -34,11 +33,11 @@ export default function AccountPage() {
           console.log('ログインしていません')
         }
 
-        // Get user info
+        // Get current userData
         const user = await getCurrentUser();
         if (user) setUserId(user.id);
 
-        //Get user profile info
+        // Get user profile info
         if (user){
           const prof = await getProfileById(user.id)
 
@@ -76,8 +75,15 @@ export default function AccountPage() {
     setError('')
     if (!e.target.files || e.target.files.length === 0) return
 
+    // Check image file size
+    const file = e.target.files[0]
+    const MAX_SIZE = 2 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setError('画像サイズは2MB以下にしてください');
+      return;
+    }
+
     // Generate a new file path from the image
-    const file = e.target.files[0] //Get the file name
     const fileExt = file.name.split('.').pop() // Get the extension
     const uniqueFileName = `${crypto.randomUUID()}.${fileExt}` // Generate file name by adding UUID and extension
     const filePath = `${userId}/${uniqueFileName}` // Generate file path by adding userID and new file name
@@ -119,14 +125,12 @@ export default function AccountPage() {
     }
   }
   
-  // For getting a list of matches predicted by logged-in users
+  // For getting a list of matches predicted by the user
   const fetchVotedCards = async () => {
     try {
-      // Get current userData
+      // Get voted fight card ids
       const user = await getCurrentUser()
-      
       if (user) {
-        // Get voted fight card ids
         const { data: voteData, error: voteError } = await supabase
           .from('votes')
           .select(`fight_card_id`)
@@ -138,18 +142,16 @@ export default function AccountPage() {
           return
         }
 
-        // Change ids to array
+        // Return voted cards by the user based on the fight card ids
         const fightCardIds = voteData.map(v => v.fight_card_id)
-
-        // 
         const { data: cardsData, error: cardsError } = await supabase
           .from("fight_cards")
           .select(`
             id,
-            fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name ),
-            fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name ),
-            organization:organizations!fight_cards_organization_id_fkey ( id, name ),
-            weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name ),
+            fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name, gender ),
+            fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name, gender ),
+            organization:organizations!fight_cards_organization_id_fkey ( id, name, gender ),
+            weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name, gender ),
             fighter1_votes,
             fighter2_votes,
             popularity_votes
@@ -157,11 +159,11 @@ export default function AccountPage() {
           .in('id', fightCardIds)
           .order("popularity_votes", { ascending: false })
 
-          if (cardsError) {
-            console.error('投票済み対戦カード取得エラー', error)
-            return
-          }
-
+        if (cardsError) {
+          console.error('投票済み対戦カード取得エラー', error)
+          return
+        }
+        
         if (!cardsError && cardsData) {
           const votedCards: FightCardUI[] = cardsData.map((v) => ({
             id: v.id,
@@ -185,14 +187,18 @@ export default function AccountPage() {
     }
   };
 
+  // For updating profile
   const handleUpdate = async () => {
     try {
       setError('')
+      // Check if username is empty
+      if (!form.username.trim()) {
+        setError('ユーザー名を入力してください')
+        return
+      }
+      // Update profile
       if (profile) {
-        await updateProfile(profile.id, {
-          username: form.username,
-          image_url: form.image_url
-        })
+        await updateProfile(profile.id, { username: form.username, image_url: form.image_url })
         setProfile({ ...profile, username: form.username, image_url: form.image_url})
       }
       setEditing(false)
@@ -207,9 +213,8 @@ export default function AccountPage() {
 
   // For deleting votes
   const handleVoteDelete = async () => {
-    if (!userId || selectedCardIds.length === 0) return
-
     try {
+      // Delete votes for selected fight cards
       const { error } = await supabase
         .from('votes')
         .delete()
@@ -221,7 +226,9 @@ export default function AccountPage() {
         return
       }
 
+      // Fetch updated voted cards
       await fetchVotedCards()
+      // Reset selected card ids
       setSelectedCardIds([])
     } catch (e) {
       console.error('削除失敗', e)
@@ -238,92 +245,86 @@ export default function AccountPage() {
   if (loading) return <div className="p-4 text-center">読み込み中...</div>
 
   return (
-    <div className="flex">
-      <main className="flex-1 p-6">
-        <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md space-y-4">
-          <h2 className="text-xl font-bold border-b pb-2">アカウント情報</h2>
+      <main className="container px-4 py-8">
+        <div className="max-w-2xl mx-auto">
           {!editing && profile && (
-            <>
-              <div className="flex justify-center">
-                <div className="relative w-24 h-24 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+              <div className="text-center mt-8">
+                <div className="flex items-center justify-center rounded-full overflow-hidden border-4 border-gray-200 mx-auto relative w-32 h-32 ">
                   {profile.image_url ? (
                     <Image src={profile.image_url} alt="Avatar" fill className="object-cover" />
                   ) : (
-                    <MdPerson size={40} color="#ccc" />
+                    <MdPerson size={100} color="#ccc" />
                   )}
                 </div>
+                <h2 className="text-2xl font-semibold text-gray-800 mt-6">{profile.username}</h2>
+                <p className="text-gray-500 mt-2">{profile.email}</p>
               </div>
-
-              <div className="space-y-2 mt-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ユーザー名:</span>
-                  <span>{profile.username}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">メールアドレス:</span>
-                  <span>{profile.email}</span>
-                </div>
-              </div>
-
-              <div className="text-right space-x-2">
-                <button
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700"
-                  onClick={() => setEditing(true)}
-                >
-                  編集
-                </button>
-                <button
+              <div className="flex flex-row gap-x-4 justify-center items-center mt-4">
+               <button
+                 className="flex items-center justify-center gap-x-2 text-white font-semibold bg-blue-600 hover:bg-blue-700 transition duration-200 rounded-lg py-3 px-8 min-w-[200px] cursor-pointer"
+                 onClick={() => setEditing(true)}
+               >
+                 <MdEdit size={20} />
+                 <span>編集</span>
+               </button>
+               <button
                   onClick={async () => {
                     if (!showVoted) {
                       await fetchVotedCards()
                     }
                     setShowVoted(!showVoted)
                   }}
-                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700"
-                >
-                  投票済みカード
-                </button>
+                 className="flex items-center justify-center gap-x-2 text-white font-semibold bg-green-600 hover:bg-green-700 transition duration-200 rounded-lg py-3 px-8 min-w-[200px] cursor-pointer"
+               >
+                 <MdViewList size={20} />
+                 <span>投票済カード</span>
+               </button>
               </div>
-            </>
+            </div>
           )}
           {showVoted && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-              <div className="relative bg-white p-6 rounded-xl shadow-xl w-full max-w-4xl max-h-lg mx-4 space-y-4">
-                <h3 className="text-lg font-semibold mb-2">あなたの投票カード一覧</h3>
+              <div className="relative bg-white rounded-xl shadow-xl p-6  w-full max-w-5xl max-h-lg mx-12 max-h-[80vh] overflow-y-auto">
+                <h3 className="text-xl font-semibold">あなたの投票カード一覧</h3>
                 {votedCards.length === 0 ? (
-                    <div className="flex justify-center items-center h-60">
+                    <div className="flex justify-center items-center h-60 mt-2">
                       <p className="text-2xl text-gray-400">投票した対戦カードがありません</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
+                    <div className="grid justify-center items-center gap-5 md:grid-cols-2 lg:grid-cols-3 mt-8">
                       {votedCards.map((card) => {
                         return (
                           <button
                             key={card.id}
                             onClick={() => toggleCardSelect(card.id)}
-                            className={`p-4 border rounded-lg shadow border-gray-200 bg-gray-50 transition-colors 
+                            className={`rounded-lg border shadow border-gray-200 bg-gray-50 px-4 py-2 h-[170px] min-w-[300px] md:min-w-[200px] lg:min-w-[200px] cursor-pointer
                                         ${selectedCardIds.includes(card.id) ? 'bg-red-100 border-red-300' : ''}`}
                           >
-                            <div className="grid grid-cols-1">
-                              <div className="flex space-x-4">
-                                <div className="text-xl font-semibold">
-                                  {card.fighter1?.name}
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-x-3 h-[100px]">
+                                <div 
+                                  className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden
+                                  ${isSmallFont(card.fighter1?.name) ? "text-base" : "text-lg"}`}
+                                >
+                                  {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
                                 </div>
-                                <span className="text-xl font-semibold">vs</span>
-                                <div className="text-xl font-semibold">
-                                  {card.fighter2?.name}
+                                <span className="text-lg font-semibold">vs</span>
+                                <div 
+                                  className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden 
+                                    ${isSmallFont(card.fighter1?.name) ? "text-base" : "text-lg"}`}
+                                >
+                                  {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
                                 </div>
                               </div>
-                              <div className="flex space-x-4">
-                                <div className="flex space-x-4 mt-3">
-                                  <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                    {card.organization?.name}
-                                  </span>
-                                  <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                    {card.weight_class?.name}
-                                  </span>
-                                </div>
+                              <div className="flex gap-x-3 mt-2">
+                                <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                  {card.organization?.name}
+                                </span>
+                                <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                  {card.weight_class?.name}
+                                </span>
                               </div>
                             </div>
                           </button>
@@ -332,58 +333,70 @@ export default function AccountPage() {
                     </div>
                   )
                 }
-                <div className="flex space-x-2">
+
+                <div className="flex justify-center gap-x-3 pt-6">
                   <button
                     onClick={() => {setShowVoted(false)}}
-                    className="px-4 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300"
+                    className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 disabled:bg-gray-400 transition duration-200 py-3 px-8 min-w-[150px] cursor-pointer"
                   >
                     閉じる
                   </button>
                   {selectedCardIds.length > 0 && (
                     <button 
                       onClick={handleVoteDelete} 
-                      className={`px-4 py-2 bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 
-                                  ${selectedCardIds.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className="text-white rounded-lg font-semibold bg-red-600 hover:bg-red-400 disabled:bg-red-400 transition duration-200 py-3 px-8 min-w-[150px] cursor-pointer"
                     >
                       投票を取り消す
                     </button>
                   )} 
-                </div> 
+                </div>
               </div>
             </div>
           )}
           {editing && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-              <div className="relative bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4 space-y-4">
+              <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"/>
+              <div className="relative bg-white rounded-xl p-6 shadow-xl w-full max-w-md mx-4">
                 <h3 className="text-lg font-semibold text-center border-b pb-2">
                   プロフィールを編集
                 </h3>
-                <div className="flex justify-center">
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
+                <div className="text-center mt-4">
+                  <div className="relative flex items-center justify-center overflow-hidden border-4 border-gray-200 rounded-full mx-auto w-32 h-32">
                     {form.image_url ? (
                       <Image src={form.image_url} alt="Avatar Preview" fill className="object-cover" />
                     ) : (
-                      <MdPerson size={40} color="#ccc" />
+                      <MdPerson size={100} className="text-gray-400" />
                     )}
                   </div>
                 </div>
-                <label className="block text-sm font-medium">ユーザー名</label>
-                <input
-                  type="text"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  className="w-full border px-3 py-2 rounded cursor-pointer"
-                />
-                <label className="block text-sm font-medium">アイコン画像</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full border px-3 py-2 rounded cursor-pointer"
-                />
-                {error && <p className="text-red-500 text-center">エラー："{error}"</p>}
-                <div className="flex justify-end space-x-2 pt-2">
+
+                <div className="flex justify-center mt-4">
+                  <label className="flex items-center space-x-2 text-white font-medium rounded-lg bg-gray-600 hover:bg-gray-700 transition duration-200 py-2 px-4 cursor-pointer">
+                    <MdUpload size={16} />
+                    <span>画像を選択</span>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                </div>
+                {error && <p className="text-red-600 rounded bg-red-50 border border-red-300 p-2">{error}</p>}
+
+                <div className="mt-3">
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                    ユーザー名 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    required
+                    maxLength={20}
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent px-3 py-2 w-full"
+                    placeholder="ユーザー名を入力してください"
+                  />
+                </div>
+                
+                <div className="flex justify-center gap-x-4 pt-6">
                   <button
                     onClick={() => {
                       setEditing(false)
@@ -393,13 +406,14 @@ export default function AccountPage() {
                       })
                       setError('')
                     }}
-                    className="px-4 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300"
+                    className="flex gap-x-2 text-white font-semibold bg-gray-600 hover:bg-gray-400 disabled:bg-gray-400 transition duration-200 rounded-lg py-3 px-8 min-w-[150px] cursor-pointer"
                   >
-                    キャンセル
+                    <MdCancel size={20} />
+                    <span>キャンセル</span>
                   </button>
                   <button
                     onClick={handleUpdate}
-                    className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer hover:bg-green-700"
+                    className="text-white font-semibold bg-blue-600 hover:bg-blue-400 disabled:bg-blue-400 rounded-lg transition duration-200 py-3 px-8 min-w-[150px] cursor-pointer"
                   >
                     保存
                   </button>
@@ -409,6 +423,5 @@ export default function AccountPage() {
           )}
         </div>
       </main>
-    </div>
   )
 };

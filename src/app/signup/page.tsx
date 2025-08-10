@@ -1,9 +1,9 @@
-'use client';
+'use client'
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FaGoogle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
-import { signUp, signInWithGoogle } from '@/utils/supabaseFunction';
+import { signUp, signInWithGoogle } from '@/utils/supabaseUtils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,8 +11,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agree, setAgree] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  // For checking if email and password is valid
   const validate = () => {
     const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
     const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -23,81 +25,93 @@ export default function RegisterPage() {
     return '';
   };
 
-  // Handle an account register
+  // For handling an account register
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent the browser's default behavior (automatic page reload)
     e.preventDefault();
-    setError('');
+
+    setErrorMsg('');
+
+    // Check email and password  
     const msg = validate();
     if (msg) {
-      setError(msg);
+      setErrorMsg(msg);
       return;
     }
 
-    // Register an account on Supabase
-    const { error: signUpError } = await signUp(email, password);
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
+    // Register an account 
+    try {
+      setLoading(true)
+      await signUp(email, password);
+      router.push('/signup-confirm');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error('Failed to register : ', e);
+        setErrorMsg(e.message);
+      } else {
+        console.error('Unexpected error during registration : ', e);
+        setErrorMsg('新規登録に失敗しました。');
+      }
     }
-    
-    router.push('/');
+    setLoading(false)
   };
 
-  // Handle a google account register
+  // For handling a google account register
   const handleGoogle = async () => {
-    setError('');
+    setErrorMsg('');
     // Register a google account on Supabase
     const { error: oauthError } = await signInWithGoogle();
     if (oauthError) {
-      setError('Googleでの登録に失敗しました');
+      setErrorMsg('Googleでの登録に失敗しました');
     }
   };
 
+  if (loading) return <div className="min-h-screen text-center p-4">アカウント作成中...</div>
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-5 rounded shadow-md w-96 mx-10">
-        <h2 className="text-2xl font-bold mb-2 text-center">新規アカウント登録</h2>
-        <p className="text-center text-gray-600 mb-6">メールアドレスまたはGoogleアカウントで登録</p>
-
-        {error && <p className="text-red-500 mb-4 text-center">エラー："{error}"</p>}
+      <div className="bg-white shadow-md rounded p-5 my-2 w-96 mx-10">
+        <h2 className="text-center text-2xl font-bold">新規アカウント登録</h2>
+        <p className="text-center text-gray-600 mt-2">メールアドレスまたはGoogleアカウントで登録</p>
+        {error && <p className="text-red-600 bg-red-50 rounded border border-red-300 p-2 mt-4">{error}</p>}
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">メールアドレス</label>
+          <div className="mt-4">
+            <label className="text-sm font-medium">メールアドレス</label>
             <input
               type="email"
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded"
+              className="border border-gray-300 rounded px-3 py-2 mt-1 w-full"
               required
             />
             <p className="text-xs text-gray-500 mt-1">メールアドレスの@より前の部分がデフォルトのユーザーIDとして使用されます</p>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">パスワード</label>
+          <div className="mt-4">
+            <label className="text-sm font-medium">パスワード</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded"
+              className="border border-gray-300 rounded px-3 py-2 mt-1 w-full"
               required
             />
             <p className="text-xs text-gray-500 mt-1">8文字以上で、大文字・小文字・数字を含める必要があります</p>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">パスワード（確認）</label>
+          <div className="mt-4">
+            <label className="block text-sm font-medium">パスワード（確認）</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded"
+              className="border border-gray-300 rounded px-3 py-2 mt-1 w-full"
               required
             />
           </div>
 
-          <div className="flex items-center mb-6">
+          <div className="flex items-center mt-6">
             <input
               type="checkbox"
               checked={agree}
@@ -105,30 +119,30 @@ export default function RegisterPage() {
               className="mr-2"
             />
             <span className="text-sm">
-              <Link href="/terms" className="text-blue-600 cursor-pointer hover:underline">利用規約</Link>と{' '}
-              <Link href="/privacy" className="text-blue-600 cursor-pointer hover:underline">プライバシーポリシー</Link>に同意する
+              <Link href="/terms" className="text-blue-600 hover:underline cursor-pointer">利用規約</Link>と{' '}
+              <Link href="/privacy" className="text-blue-600 hover:underline cursor-pointer">プライバシーポリシー</Link>に同意する
             </span>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded cursor-pointer hover:bg-blue-700 transition"
+            className="text-white bg-blue-600 hover:bg-blue-700 transition duration-200 rounded py-2 mt-4 w-full cursor-pointer"
           >
             アカウントを作成
           </button>
         </form>
 
-        <div className="text-center my-4 text-gray-500">または</div>
+        <div className="text-center text-gray-500 my-4">または</div>
 
         <button
           onClick={handleGoogle}
-          className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition flex items-center justify-center cursor-pointer">
+          className="flex items-center justify-center text-white bg-red-600 hover:bg-red-700 transition duration-200 rounded py-2 w-full cursor-pointer">
           <FaGoogle className="mr-2"/>Googleで登録
         </button>
 
-        <div className="mt-4 text-center text-sm cursor-pointer">
+        <div className="text-center text-sm mt-4">
           すでにアカウントをお持ちの場合は{' '}
-          <a href="/login" className="text-blue-600 cursor-pointer hover:underline">ログイン</a>
+          <Link href="/login" className="text-blue-600 hover:underline cursor-pointer">ログイン</Link>
         </div>
       </div>
     </div>

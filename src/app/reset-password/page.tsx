@@ -1,74 +1,80 @@
 'use client'
-
-import { useState } from 'react'
-import { supabase } from '@/utils/supabaseBrowserClient'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { supabase } from '@/utils/supabaseBrowserClient';
+import { useRouter } from 'next/navigation';
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const [error, setErrorMsg] = useState('')
 
+  // For handling password upadate
   const handleUpdatePassword = async (e: React.FormEvent) => {
+    // Prevent the browser's default behavior (automatic page reload)
     e.preventDefault()
-    setMessage('')
-    setError('')
 
-    // パスワードバリデーション: 8文字以上、大小文字、数字を含む
+    setMessage('')
+    setErrorMsg('')
+
+    // Check if password is valid (at least 8 characters, uppercase and lowercase, and numbers)
     const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
     if (!pwdRegex.test(password)) {
-      setError('パスワードは8文字以上で、大文字・小文字・数字を含める必要があります')
+      setErrorMsg('パスワードは8文字以上で、大文字・小文字・数字を含める必要があります')
       return
     }
 
-    // パスワードと確認が一致しない場合
+    // Check if passwords match
     if (password !== confirmPassword) {
-      setError('パスワードが一致しません')
+      setErrorMsg('パスワードが一致しません')
       return
     }
 
-    // Supabase でパスワード更新
+    // Update the password
     const { error } = await supabase.auth.updateUser({ password })
-
     if (error) {
-      setError(error.message)
+      const msg = error.message.toLowerCase();
+      if (msg.includes('rate limit')) {
+        setErrorMsg('メール送信の回数制限を超えました。しばらくしてから再試行してください。');
+        return
+      }
+      console.error('Failed to reset password : ', error)
+      setErrorMsg(`パスワードのリセットに失敗しました。`)
     } else {
-      setMessage('パスワードが更新されました。ログインページに戻ります。')
-      setTimeout(() => router.push('/login'), 3000)
+      router.push('/reset-comp')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4 text-center">新しいパスワードを設定</h2>
-        {message && <p className="text-green-600 text-sm mb-4 text-center">{message}</p>}
-        {error && <p className="text-red-600 text-sm mb-4 text-center">エラー：{error}</p>}
+      <div className="bg-white rounded shadow-md p-8 w-100">
+        <h2 className="text-center text-xl font-bold">新しいパスワードを設定</h2>
+        {message && <p className="text-center text-sm text-green-600 mt-4">{message}</p>}
+        {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-4">{error}</p>}
 
-        <form onSubmit={handleUpdatePassword}>
-          <label className="block mb-2 text-sm">新しいパスワード</label>
+        <form onSubmit={handleUpdatePassword} className="mt-6">
+          <label className="text-sm">新しいパスワード</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full border border-gray-300 px-3 py-2 rounded mb-4"
+            className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
           />
 
-          <label className="block mb-2 text-sm">パスワード（確認）</label>
+          <label className="text-sm mt-4">パスワード（確認）</label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full border border-gray-300 px-3 py-2 rounded mb-4"
+            className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
           />
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="text-white bg-blue-600 hover:bg-blue-700 transition buration-200 rounded py-2 mt-5 w-full cursor-pointer"
           >
             パスワードを更新
           </button>

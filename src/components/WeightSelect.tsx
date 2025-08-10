@@ -1,28 +1,33 @@
-const WEIGHTS = [
-  '指定なし',
-  '階級なし',
-  '-77KG',
-  '-71KG',
-  '-67.5KG',
-  '-64KG',
-  '-61KG',
-  '-58KG',
-  '-55KG',
-  '-53KG',
-];
+'use client'
+import React, { useEffect, useState } from 'react';
+import { fetchWeightClassesByGender } from "@/utils/supabaseUtils";
+import {WeightClass} from '@/types/types';
 
-const WeightSelect = ({ value, onChange }: { value: string; onChange: (newWeight: string) => void }) => {
+const WeightSelect = ({ value, onChange, gender }: { value: string; onChange: (newWeight: string) => void; gender: "male" | "female";}) => {
+  const [weightClasses, setWeightClasses] = useState<WeightClass[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { wData, wError } = await fetchWeightClassesByGender(gender);
+      if (!wError && wData) {
+        setWeightClasses(wData);
+      } else {
+        console.error("Failed to fetch weight classes : ", wError);
+      }
+    })();
+  }, [gender]);
+
   return (
-    <div className="col-span-2">
-      <h2 className="mb-1 text-lg">階級</h2>
+    <div className="w-[130] md:col-span-2 md:w-full">
+      <h2 className="text-lg mb-1">階級</h2>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 w-full cursor-pointer"
       >
-        {WEIGHTS.map(w => (
-          <option key={w} value={w}>
-            {w}
+        {weightClasses.map(w => (
+          <option key={w.id} value={w.name}>
+            {w.name}
           </option>
         ))}
       </select>

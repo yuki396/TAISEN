@@ -47,16 +47,19 @@ export type Database = {
           created_at: string | null
           id: number
           name: string
+          gender: string
         }
         Insert: {
           created_at?: string | null
           id?: number
           name: string
+          gender: string
         }
         Update: {
           created_at?: string | null
           id?: number
           name?: string
+          gender?: string
         }
       }
       organizations: {

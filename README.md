@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TAISEN
+**TAISEN** は、キックボクシングファンが作ったキックボクシングファンのためのサイトです。
+現在はキックボクシングファンの「こんな試合カードが見たい！」を集め、投票やランキングで盛り上がれるサービスとなっています。
+今後機能を追加していく予定です。
 
-## Getting Started
 
-First, run the development server:
+## ✨ 主な機能
+- 🔐 ユーザー認証（メールアドレス & Google OAuth）  
+- 🎴 対戦カードの作成
+- ✅ 投票機能（人気投票 & 勝敗予想）
+- 📊 対戦カードの階級別・団体別のランキング表示・検索
+- 👤 マイページ 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🌲 プロジェクト構成
+```
+TAISEN/
+├── public/                # 静的ファイル（画像・favicon等）
+├── src/
+│   ├── app/
+│   │     ├── account/         # マイページ
+│   │     ├── allrankings/     # 11位以降のランキング一覧ページ
+│   │     ├── auth-callback/   # メールアドレスの認証完了ページ
+│   │     ├── create/          # 対戦カード作成ページ
+│   │     ├── forgot-password/ # パスワードリセットページ
+│   │     ├── login/           # ログインページ
+│   │     ├── privacy/         # プライバシーポリシーページ
+│   │     ├── reset-comp/      # パスワードリセット完了ページ
+│   │     ├── reset-password/  # 新パスワード入力ページ
+│   │     ├── reset-send/      # パスワードリセットメール送信完了ページ
+│   │     ├── signup/          # 新規登録ページ
+│   │     ├── signup-confirm/  # 登録確認メール送信完了ページ
+│   │     └── terms/           # 利用規約ページ
+│   ├── componets/          # 再利用可能なReactコンポーネント
+│   ├── types/               # Supabaseクライアントやユーティリティ
+│   └── utils/             # 型定義（TypeScript用）
+├── .env.local             # 環境変数（SupabaseのURLやキー等）
+└── ...（その他設定ファイル）
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ 技術スタック
+Supabase をバックエンドに、Next.js／React／TypeScript で開発し、Vercel へデプロイしています。
+- **フロントエンド**  
+  - Next.js 15  
+  - React + TypeScript  
+  - Tailwind CSS  
+  - React Icons  
+- **バックエンド／データベース**  
+  - Supabase (PostgreSQL + Auth + Storage)  
+- **デプロイ**  
+  - Vercel  
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 セットアップ  
+以下の手順で、ローカル開発環境を構築できます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **リポジトリをクローン**
+  ```
+  git clone https://github.com/yuki396/TAISEN.git
+  ```
+2. **パッケージをインストール** 
+  ```
+  npm install
+  # または
+  yarn install
+  ```
+3. **Tailwind CSS を初期化（初回のみ）** 
+  ```
+  npx tailwindcss init -p
+  ```
+4. **環境変数ファイルを作成**
+  プロジェクトルートに .env.local を作成し、以下を設定します。
+  ```
+  NEXT_PUBLIC_SUPABASE_URL=＜Supabase URL＞
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=＜Supabase 匿名キー＞
+  ```
+5. **開発サーバーを起動**
+  ```
+  npm run dev
+  # または
+  yarn dev
+  ```
