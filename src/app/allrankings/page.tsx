@@ -1,17 +1,19 @@
 'use client'
-
-import { useEffect, useState, useMemo} from 'react'
+import { useEffect, useState, useMemo} from 'react';
 import Link from "next/link";
 import { MdHowToVote } from "react-icons/md";
 import { supabase } from '@/utils/supabaseBrowserClient';
 import { FightCardUI, VoteCardUI } from '@/types/types';
-import { getCurrentUser, isLoggedIn } from '@/utils/supabaseFunction'
+import { getCurrentUser, isLoggedIn, fetchVotesForCurrentUser } from '@/utils/supabaseUtils';
+import { isSmallFont, insertLineBreak, noBreakDots } from '@/utils/textUtils';
 
 export default function AllRankingsPage() {
   const [filteredCards, setFilteredCards] = useState<FightCardUI[]>([]);
   const [votedCards, setVotedCards] = useState<VoteCardUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const DISPLAY_INITIAL = 30;
+  const [displayCount, setDisplayCount] = useState(DISPLAY_INITIAL);
 
   useEffect(() => {
     (async () => {
@@ -28,23 +30,20 @@ export default function AllRankingsPage() {
         if (storedCards) setFilteredCards(JSON.parse(storedCards));
       }
 
-      // Get votes data for the current user
+      // Fetch votes for ther current user
       if (user?.id) {
-        const { data: votesData, error:votesError } = await supabase
-          .from("votes")
-          .select(`
-            id,
-            user_id,
-            fight_card_id,
-            vote_type,
-            vote_for
-          `).eq("user_id", user?.id) as unknown as {
-              data: VoteCardUI[];
-              error: Error 
-          };
+        const { votesData, votesError } = await fetchVotesForCurrentUser(user.id);
 
         if (!votesError && votesData) {
-          setVotedCards(votesData);
+          const votes: VoteCardUI[] = votesData.map((v) => ({
+            id: v.id ?? 0,
+            fight_card_id: v.fight_card_id ?? 0,
+            vote_type: v.vote_type ?? null,
+            vote_for: v.vote_for ?? null,
+          }));
+          setVotedCards(votes);
+        } else {
+          console.error("Failed to fetch votes", votesError)
         }
       }      
       setLoading(false)
@@ -55,13 +54,13 @@ export default function AllRankingsPage() {
   const handlePopularityVote = async(cardId: number) => {
     try{
       // Confirm login
-      const session = await isLoggedIn();
-      if (!session) {
-        alert('ログインしてください')
+      const loggedIn = await isLoggedIn();
+      if (!loggedIn) {
+        alert('ログインしてください。')
         return
       };
 
-      // Get popularity vote data from userID
+      // Get popularity vote data from user ID
       const { data: existingVoteData, error: fetchError } = await supabase
         .from("votes")
         .select("id")
@@ -71,7 +70,7 @@ export default function AllRankingsPage() {
         .maybeSingle();
       
       if (fetchError) {
-        console.error("投票チェックに失敗", fetchError);
+        console.error("Failed to ", fetchError);
         return;
       }
 
@@ -91,23 +90,18 @@ export default function AllRankingsPage() {
           .eq("id", existingVoteData.id);
 
         if (deleteError) {
-          console.error("投票削除に失敗", deleteError);
+          console.error("Failed to delete vote : ", deleteError);
         } else {
-          console.log("投票をキャンセルしました");
+          // Remove the vote from the state
           setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
           setFilteredCards((prev) =>
-            prev.map((c) =>
-              c.id === cardId
-                ? {
-                    ...c,
-                    popularity_votes: Math.max((c.popularity_votes ?? 1) - 1, 0),
-                  }
-                : c
+            prev.map((c) => 
+              c.id === cardId ? { ...c, popularity_votes: Math.max((c.popularity_votes ?? 1) - 1, 0) } : c
             )
           );
         }
       } else {
-        // Insert popularity vote data from votes table
+        // Insert popularity vote data into votes table
         const { data: voteData, error: insertError } = await supabase
         .from("votes")
         .insert({
@@ -120,12 +114,12 @@ export default function AllRankingsPage() {
 
         if (insertError) {
           if (insertError.code === "23505") {
-            console.warn("すでに投票済みです");
+            console.warn("already voted for this card");
           } else {
-            console.error("投票に失敗しました", insertError);
+            console.error("Failed to vote : ", insertError);
           }
         } else if (voteData) {
-          console.log("投票完了");
+          // Add the new vote to the state
           setVotedCards((prev) => [...prev, voteData]);
           setFilteredCards((prev) =>
             prev.map((c) =>
@@ -141,21 +135,20 @@ export default function AllRankingsPage() {
       }
     } catch (e: unknown) {
       if (e instanceof Error) {
-        console.error(e.message)
+        console.error(e.message);
       } else {
-        console.error('不明なエラーが発生しました')
+        console.error('Unexpected error during popularity vote : ', e);
       }
     }
   };
 
-  // Reorder fightCards based on popularity votes
+  // For reordering fightCards based on popularity votes
   const sortedFilteredCards = useMemo(() => {
     return [...filteredCards].sort(
-      (a, b) => (b.popularity_votes ?? 0) - (a.popularity_votes ?? 0)
+      (card1, card2) => (card2.popularity_votes ?? 0) - (card1.popularity_votes ?? 0)
     );
   }, [filteredCards]);
-
-  const under10 = sortedFilteredCards.slice(9);
+  const under10 = sortedFilteredCards.slice(9, 9 + displayCount);
 
   // For checking if you voted
   const isPopularityVoted = (cardId: number): boolean => {
@@ -164,11 +157,17 @@ export default function AllRankingsPage() {
     );
   };
 
-  if (loading) return <div className="p-4 text-center">読み込み中...</div>
+  // For displaying more cards
+  const DISPLAY_INCREMENT = 20;
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => prev + DISPLAY_INCREMENT);
+  };
+
+  if (loading) return <div className="min-h-screen text-center p-4">読み込み中...</div>
 
   return (
-    <div className="space-y-4 mt-4 px-5">
-      <Link href="/" className="text-gray-500 cursor-pointer hover:text-blue-800">
+    <div className="min-h-screen mt-4">
+      <Link href="/" className="text-gray-500 hover:text-blue-800 cursor-pointer">
         ← ランキングトップに戻る
       </Link>
       {under10.length === 0 ? (
@@ -176,33 +175,37 @@ export default function AllRankingsPage() {
           <p className="text-2xl text-gray-400">対戦カードがありません</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mt-4">
+        <div className="grid justify-center items-center gap-5 md:grid-cols-2 lg:grid-cols-3 mt-8">
           {under10.map((card, index) => {
             const popVoted = !!isPopularityVoted(card.id);
             return(
               <div
                 key={card.id}
-                className="relative bg-white rounded-lg px-6 py-2 
+                className="relative bg-white rounded-lg px-6 py-3 h-[240px] min-w-[200px] md:min-w-[300px] lg:min-w-[300px] 
                             shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                             hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
               >
-                <div
-                  className={`absolute top-2 left-2 px-2 py-1 rounded text-sm font-bold`}
-                >
+                <div className="absolute top-2 left-2 text-sm font-bold bg-gray-100 rounded  px-2 py-1">
                   {index + 11}位
                 </div>
-                <div className="grid grid-cols-1">
-                  <div className="flex space-x-4 mt-9">
-                    <div className="text-xl font-semibold">
-                      {card.fighter1?.name}
+                <div className="flex flex-col">
+                  <div className="flex items-center text-center gap-x-4 mt-9 h-[90px]">
+                    <div 
+                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[100px]
+                      ${isSmallFont(card.fighter1?.name) ? "text-lg" : "text-xl"}`}
+                    >
+                      {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
                     </div>
                     <span className="text-xl font-semibold">vs</span>
-                    <div className="text-xl font-semibold">
-                      {card.fighter2?.name}
+                    <div 
+                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[100px]
+                      ${isSmallFont(card.fighter2?.name) ? "text-lg" : "text-xl"}`}
+                    >
+                      {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
                     </div>
                   </div>
-                  <div className="flex-col space-x-4">
-                    <div className="flex space-x-4 mt-3">
+                  <div className="flex flex-col gap-y-2 mt-5">
+                    <div className="flex gap-x-2">
                       <span className="text-black bg-gray-100 rounded px-1 py-1">
                         {card.organization?.name}
                       </span>
@@ -210,22 +213,35 @@ export default function AllRankingsPage() {
                         {card.weight_class?.name}
                       </span>
                     </div>
-                    <div className="flex space-x-4">
-                      <div className="flex items-center space-x-1 cursor-pointer mt-3" onClick={() => handlePopularityVote(card.id)}>
+                    <div className="flex items-center gap-x-4">
+                      <div 
+                        className="flex items-center gap-x-1 cursor-pointer"
+                        onClick={() => handlePopularityVote(card.id)}
+                      >
                         <MdHowToVote size={24} />
                         <span className="text-sm text-gray-600">{card.popularity_votes}</span>
                       </div>
-                      {popVoted && (
-                        <div className="font-bold text-sm mt-5">
-                          投票済み
-                        </div>
-                      )}
+                        {popVoted && (
+                          <div className="text-sm font-bold">
+                            投票済み
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+      {displayCount + 9 < sortedFilteredCards.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={handleLoadMore}
+            className="text-gray-500 hover:text-blue-800 px-4 py-2 cursor-pointer"
+          >
+            もっと見る
+          </button>
         </div>
       )}
     </div>

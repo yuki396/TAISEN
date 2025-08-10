@@ -1,9 +1,8 @@
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white p-4 text-center">
+    <footer className="text-center text-white bg-gray-800 p-4">
       <p>© {new Date().getFullYear()} TAISEN All rights reserved.</p>
     </footer>
   )
 }
-

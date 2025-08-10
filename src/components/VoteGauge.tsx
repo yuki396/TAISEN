@@ -1,6 +1,6 @@
 "use client";
 
-const VoteGauge = ({ leftVotes, rightVotes} :{ leftVotes:number, rightVotes:number}) => {
+const VoteGauge = ({ leftVotes, rightVotes} :{ leftVotes:number; rightVotes:number; }) => {
   const total = leftVotes + rightVotes;
   const leftPercent = total > 0 ? Math.round((leftVotes / total) * 100): 50;
   const rightPercent = 100 - leftPercent;
@@ -12,14 +12,15 @@ const VoteGauge = ({ leftVotes, rightVotes} :{ leftVotes:number, rightVotes:numb
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={leftPercent}
-      className="w-full flex h-4 rounded-md overflow-hidden"
+      className="flex overflow-hidden rounded-md w-full h-4"
     >
-      {/* 左側セグメント */}
+      {/* lefg side */}
       <div
         className="transition-width duration-300"
         style={{width: `${leftPercent}%`, backgroundColor: '#EF4444'}}
       />
-      {/* 右側セグメント */}
+
+      {/* right side */}
       <div
         className="transition-width duration-300"
         style={{width: `${rightPercent}%`, backgroundColor: '#3B82F6'}}

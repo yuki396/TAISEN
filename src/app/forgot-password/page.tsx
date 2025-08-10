@@ -1,53 +1,58 @@
 'use client'
-
-import { useState } from 'react'
-import Link from 'next/link'
-import { supabase } from '@/utils/supabaseBrowserClient'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import Link from 'next/link';
+import { supabase } from '@/utils/supabaseBrowserClient';
+import { useRouter } from 'next/navigation';
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const [error, setErrorMsg] = useState('')
 
+  // For handling the password reset 
   const handleResetPassword = async (e: React.FormEvent) => {
+    // Prevent the browser's default behavior (automatic page reload)
     e.preventDefault()
-    setMessage('')
-    setError('')
 
+    setErrorMsg('')
+
+    // Validate email format
     const emailRegex = /^[^@]+@[^@]+\.[^@]+$/
     if (!emailRegex.test(email)) {
-      setError('正しいメールアドレスを入力してください')
+      setErrorMsg('正しいメールアドレスを入力してください。')
       return
     }
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${location.origin}/reset-password`,
-    })
+    // Reset password
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email, 
+      { redirectTo: `${location.origin}/reset-password` }
+    )
 
     if (resetError) {
-      setError(resetError.message)
+      console.error('Failed to reset password for email:', resetError)
+      setErrorMsg(`メールの送信に失敗しました。`)
     } else {
-      router.push('/send-complete')
+      router.push('/reset-send')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <div className="mb-4 text-sm">
+      <div className="bg-white rounded shadow-md p-8 w-full max-w-md">
+        <div className="text-sm">
           <Link href="/login" className="text-blue-600 hover:underline">
             ← ログインに戻る
           </Link>
         </div>
-        <h2 className="text-2xl font-bold mt-7 text-center">パスワードをお忘れですか？</h2>
-        <p className="text-sm text-gray-600 mt-4 text-center">
+        <h2 className="text-center text-2xl font-bold mt-7">パスワードをお忘れですか？</h2>
+        <p className="text-center text-sm text-gray-600 mt-4">
           登録したメールアドレスを入力してください。<br />
-          パスワード再設定用のリンクを送信します。
+          パスワード再設定メールを送信します。
         </p>
         <form onSubmit={handleResetPassword}>
-          <label htmlFor="email" className="block text-sm font-medium mt-7">
+          {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-2">{error}</p>}
+          <label htmlFor="email" className="text-sm font-medium mt-7">
             メールアドレス
           </label>
           <input
@@ -57,19 +62,18 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full border border-gray-300 px-3 py-2 rounded mt-3"
+            className="border border-gray-300 rounded px-3 py-2 mt-3 w-full"
           />
-          {error && <p className="text-red-600 mt-5 text-center">エラー：{error}</p>}
           <button
             type="submit"
-            className="bg-blue-600 text-white py-2 mt-5 w-full rounded cursor-pointer hover:bg-blue-700 transition"
+            className="text-white rounded bg-blue-600 hover:bg-blue-700 transition duration-200 py-2 mt-5 w-full cursor-pointer"
           >
             送信する
           </button>
         </form>
-        <div className="mt-4 text-center text-sm">
+        <div className="text-center text-sm mt-4">
           アカウントをお持ちでない場合は{' '}
-          <Link href="/signup" className="text-blue-600 cursor-pointer hover:underline">
+          <Link href="/signup" className="text-blue-600 hover:underline cursor-pointer">
             新規登録
           </Link>
         </div>

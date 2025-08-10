@@ -1,11 +1,11 @@
-const Search = ({ value, onChange }: { value: string; onChange: (newWeight: string) => void }) => {
+const Search = ({ value, onChange }: { value: string; onChange: (newWeight: string) => void; }) => {
   return (
-    <div className="col-span-8">
-      <h2 className="mb-1 text-lg">検索</h2>
+    <div className="md:col-span-8">
+      <h2 className="text-lg mb-1">検索</h2>
       <input
         type="text"
         placeholder="選手名を入力"
-        className="w-full border border-gray-300 rounded-lg py-2 px-4 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 py-2 px-4 mr-2 w-full"
         onChange={(e) => onChange(e.target.value)}
         value={value}
       />
