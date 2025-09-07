@@ -5,7 +5,6 @@
   --foreground: #171717;
 }
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -64,5 +63,25 @@ body {
   .indented-li {
     text-indent: -1.2em;
     padding-left: 1.2em; 
+  }
+
+  input[type="radio"] {
+    accent-color: #ef4444; /* Tailwindのred-500 */
+  }
+  
+  /* Small ember*/
+  @keyframes ember {
+    0% { opacity: 0; transform: translateY(0) scale(0.8); }
+    50% { opacity: 1; transform: translateY(-6px) scale(1); }
+    100% { opacity: 0; transform: translateY(-12px) scale(0.6); }
+  }
+  .ember {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #ffedcf 0%, #ff2d2d 40%, rgba(155,28,28,0) 70%);
+    border-radius: 999px;
+    opacity: 0;
+    animation: ember 1.2s linear infinite;
   }
 }

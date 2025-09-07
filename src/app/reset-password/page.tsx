@@ -1,50 +1,54 @@
 'use client'
 import { useState } from 'react';
-import { supabase } from '@/utils/supabaseBrowserClient';
+import { supabase } from '@/libs/supabaseBrowserClient';
 import { useRouter } from 'next/navigation';
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setErrorMsg] = useState('')
+  const router = useRouter();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setErrorMsg] = useState('');
 
   // For handling password upadate
   const handleUpdatePassword = async (e: React.FormEvent) => {
     // Prevent the browser's default behavior (automatic page reload)
-    e.preventDefault()
+    e.preventDefault();
 
-    setMessage('')
-    setErrorMsg('')
+    setMessage('');
+    setErrorMsg('');
 
     // Check if password is valid (at least 8 characters, uppercase and lowercase, and numbers)
     const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
     if (!pwdRegex.test(password)) {
-      setErrorMsg('パスワードは8文字以上で、大文字・小文字・数字を含める必要があります')
-      return
+      setErrorMsg('パスワードは8文字以上で、大文字・小文字・数字を含める必要があります');
+      return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setErrorMsg('パスワードが一致しません')
-      return
+      setErrorMsg('パスワードと確認が一致しません');
+      return;
     }
 
     // Update the password
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) {
-      const msg = error.message.toLowerCase();
-      if (msg.includes('rate limit')) {
+    const { error: upError } = await supabase.auth.updateUser({ password });
+    if (upError) {
+      if (upError.status === 429 || upError.code === 'over_email_send_rate_limit') {
         setErrorMsg('メール送信の回数制限を超えました。しばらくしてから再試行してください。');
-        return
+        return;
+      } else if (upError.code === 'same_password' || upError.status === 422){
+        setErrorMsg('新しいパスワードは現在のパスワードと同じです。別のパスワードを入力してください。');
+        return;
+      } else {
+        console.error('Failed to reset password : ', JSON.stringify(upError));
+        setErrorMsg(`パスワードのリセットに失敗しました。しばらくしてから再試行してください。`);
+        return;
       }
-      console.error('Failed to reset password : ', error)
-      setErrorMsg(`パスワードのリセットに失敗しました。`)
     } else {
-      router.push('/reset-comp')
+      router.push('/reset-comp');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -54,24 +58,26 @@ export default function ResetPasswordPage() {
         {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-4">{error}</p>}
 
         <form onSubmit={handleUpdatePassword} className="mt-6">
-          <label className="text-sm">新しいパスワード</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
-          />
-
-          <label className="text-sm mt-4">パスワード（確認）</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
-          />
-
+          <div className="mt-6">
+            <label className="text-sm">新しいパスワード</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
+            />
+          </div>
+          <div className="mt-6">
+            <label className="text-sm">パスワード（確認）</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
+            />
+          </div>
           <button
             type="submit"
             className="text-white bg-blue-600 hover:bg-blue-700 transition buration-200 rounded py-2 mt-5 w-full cursor-pointer"
@@ -81,5 +87,5 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }

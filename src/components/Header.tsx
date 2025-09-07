@@ -3,79 +3,90 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MdPerson } from 'react-icons/md';
 import { useState, useEffect, useRef } from 'react';
-import { getProfileById } from '@/utils/supabaseUtils';
+import { fetchProfileById, signOut } from '@/utils/supabaseBrowserUtils';
 import { ProfileUI } from '@/types/types';
-import { supabase } from '@/utils/supabaseBrowserClient';
+import { supabase } from '@/libs/supabaseBrowserClient';
 import { useRouter } from 'next/navigation';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 export default function Header() {
-  const router = useRouter()  
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<ProfileUI| null>(null)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [profile, setProfile] = useState<ProfileUI| null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isAdmin, loading } = useIsAdmin();
 
-  useEffect(() => {
-    // Set UserID on login/logout
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user.id ?? null)
-    })
-
-    // Set UserID on first mount
-    supabase.auth.getSession()
-      .then(({ data }) => setUserId(data.session?.user.id ?? null))
-
-    // Cleanup subsription on unmount 
-    return () => subscription.unsubscribe()
-  }, [])
-
-  // Fetch profile when user ID changes
-  useEffect(() => {
-    // If user ID is null, reset profile
-    if (!userId) {
-      setProfile(null)
-      return
-    }
-    
-    // Fetch profile
-    getProfileById(userId)
-      .then((profile) => {
-        setProfile(profile);
-      })
-      .catch(() => setProfile(null))
-  }, [userId])
 
   // Handle click outside dropdown to close it
-  useEffect(() => {
+  const handledropdown = () => {
     // For handling click outside dropdown
     const handleClickOutside = (e: MouseEvent) => {
       // Check if dropdown is open and,
       // if the click is outside the dropdown(the clicked element is not among the elements referenced by dropdownRef)
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         // close dropdown
-        setDropdownOpen(false)
+        setDropdownOpen(false);
       }
-    }
+    };
     
     // Add event listener for clciking mouse
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside);
 
     // Cleanup event listener on unmount
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+  };
+
+  useEffect(() => {
+    // Set UserID on login/logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null);
+    });
+
+    // Set UserID on first mount
+    supabase.auth.getSession()
+      .then(({ data }) => setUserId(data.session?.user.id ?? null));
+
+    // Handle dropdown
+    handledropdown();
+
+    // Cleanup subsription on unmount 
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch profile when user ID changes
+  useEffect(() => {
+    (async () => {
+      // If user ID is null, reset profile
+      if (!userId) {
+        setProfile(null);
+        return;
+      }
+      
+      // Fetch profile
+      const {pData, pError} = await fetchProfileById(userId);
+      
+      if (pError) {
+        console.error('Failed to fetch profile', JSON.stringify(pError));
+      } else {
+        setProfile(pData);
+      }
+    })();
+  }, [userId]);
 
   // For handling logout
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setUserId(null)
-    setProfile(null)
-    setDropdownOpen(false)
-    router.push('/login') 
-  }
+    await signOut();
+    setUserId(null);
+    setProfile(null);
+    setDropdownOpen(false);
+    router.push('/login');
+  };
 
   return (
     <header className="text-white bg-gray-800">
-      <div className="container grid grid-cols-2 mx-auto">
+      <div className="container grid grid-cols-2 mx-auto px-3">
         {/* Logo and Title */}
         <h1 className="row-start-1 col-start-1 flex items-center text-2xl font-bold my-3">
           <Link href="/" className="flex items-center text-2xl font-bold">
@@ -96,7 +107,7 @@ export default function Header() {
           {userId ? (
             <button
               onClick={() => setDropdownOpen(open => !open)}
-              className="cursor-pointer pt-1 focus:outline-none"
+              className="cursor-pointer pt-1 focus:outline-none cursor-pointer"
             >
               {profile?.image_url ? (
                 <div className="rounded-full overflow-hidden w-10 h-10">
@@ -135,9 +146,32 @@ export default function Header() {
               >
                 マイページ
               </Link>
+              <Link
+                href="/create"
+                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                onClick={() => setDropdownOpen(false)}
+              >
+                対戦カード作成
+              </Link>
+              <Link
+                href="/request"
+                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                onClick={() => setDropdownOpen(false)}
+              >
+                選手申請
+              </Link>
+              {!loading && isAdmin && (
+                <Link 
+                  href="/api/admin/request-msg" 
+                  className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  申請一覧
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
-                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full cursor-pointer"
               >
                 ログアウト
               </button>
@@ -148,15 +182,15 @@ export default function Header() {
         {/* Main Navigation */}
         <div className="row-start-2 col-span-2 border-t-[1.8px] border-[rgba(0,0,0,0.3)]">
           <nav aria-label="Main navigation">
-            <ul className="flex gap-x-5 py-4">
+            <ul className="flex gap-x-6 py-4">
               <li>
                 <Link href="/" className="font-bold hover:text-gray-300">
-                  ランキング
+                  対戦カードランキング
                 </Link>
               </li>
               <li>
-                <Link href="/create" className="font-bold hover:text-gray-300">
-                  対戦カード作成
+                <Link href="/top4" className="font-bold hover:text-gray-300">
+                  トップフォーファイター
                 </Link>
               </li>
             </ul>
@@ -164,5 +198,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

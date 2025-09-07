@@ -1,10 +1,16 @@
 'use client'
 import { useEffect, useState, useMemo} from 'react';
-import Link from "next/link";
-import { MdHowToVote } from "react-icons/md";
-import { supabase } from '@/utils/supabaseBrowserClient';
+import Link from 'next/link';
+import { MdHowToVote } from 'react-icons/md';
 import { FightCardUI, VoteCardUI } from '@/types/types';
-import { getCurrentUser, isLoggedIn, fetchVotesForCurrentUser } from '@/utils/supabaseUtils';
+import { 
+  getCurrentUser, 
+  isLoggedIn, 
+  fetchVotesForCurrentUser, 
+  fetchVoteByCardId,
+  deleteVote,
+  insertPopVote
+} from '@/utils/supabaseBrowserUtils';
 import { isSmallFont, insertLineBreak, noBreakDots } from '@/utils/textUtils';
 
 export default function AllRankingsPage() {
@@ -17,7 +23,7 @@ export default function AllRankingsPage() {
 
   useEffect(() => {
     (async () => {
-      //Display Loading 
+      // Display Loading 
       setLoading(true)
       
       // Get current userData
@@ -34,19 +40,19 @@ export default function AllRankingsPage() {
       if (user?.id) {
         const { votesData, votesError } = await fetchVotesForCurrentUser(user.id);
 
-        if (!votesError && votesData) {
-          const votes: VoteCardUI[] = votesData.map((v) => ({
+        if (votesError) {
+          console.error('Failed to fetch votes', JSON.stringify(votesError));
+        } else  {
+          const votes: VoteCardUI[] = (votesData || []).map((v) => ({
             id: v.id ?? 0,
             fight_card_id: v.fight_card_id ?? 0,
             vote_type: v.vote_type ?? null,
             vote_for: v.vote_for ?? null,
           }));
           setVotedCards(votes);
-        } else {
-          console.error("Failed to fetch votes", votesError)
         }
       }      
-      setLoading(false)
+      setLoading(false);
     })();
   }, []);
 
@@ -56,44 +62,34 @@ export default function AllRankingsPage() {
       // Confirm login
       const loggedIn = await isLoggedIn();
       if (!loggedIn) {
-        alert('ログインしてください。')
-        return
+        alert('ログインしてください。');
+        return;
       };
 
       // Get popularity vote data from user ID
-      const { data: existingVoteData, error: fetchError } = await supabase
-        .from("votes")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("fight_card_id", cardId)
-        .eq("vote_type", "popularity")
-        .maybeSingle();
-      
-      if (fetchError) {
-        console.error("Failed to ", fetchError);
+      const { voteData, voteError } = await fetchVoteByCardId(userId, cardId, 'popularity');
+      if (voteError) {
+        console.error('Failed to ', JSON.stringify(voteError));
         return;
       }
 
       // Check the limit of the number of popular votes
-      const popularityCount = votedCards.filter(v => v.vote_type === "popularity").length;
-      if (!existingVoteData && popularityCount >= 30) {
-        alert("人気投票は30件までです。");
+      const popularityCount = votedCards.filter(v => v.vote_type === 'popularity').length;
+      if (!voteData && popularityCount >= 30) {
+        alert('人気投票は30件までです。');
         return;
       }
     
       // Check if you've already voted
-      if (existingVoteData) {
+      if (voteData) {
         // Delete popularity vote data from votes table
-        const { error: deleteError } = await supabase
-          .from("votes")
-          .delete()
-          .eq("id", existingVoteData.id);
+        const voteError = await deleteVote(voteData.id);
 
-        if (deleteError) {
-          console.error("Failed to delete vote : ", deleteError);
+        if (voteError) {
+          console.error('Failed to delete vote : ', JSON.stringify(voteError));
         } else {
           // Remove the vote from the state
-          setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
+          setVotedCards((prev) => prev.filter((v) => v.id !== voteData.id));
           setFilteredCards((prev) =>
             prev.map((c) => 
               c.id === cardId ? { ...c, popularity_votes: Math.max((c.popularity_votes ?? 1) - 1, 0) } : c
@@ -102,21 +98,13 @@ export default function AllRankingsPage() {
         }
       } else {
         // Insert popularity vote data into votes table
-        const { data: voteData, error: insertError } = await supabase
-        .from("votes")
-        .insert({
-          user_id: userId,
-          fight_card_id: cardId,
-          vote_type: "popularity",
-        })
-        .select()
-        .single();
+        const { voteData, voteError } = await insertPopVote(userId, cardId, 'popularity');
 
-        if (insertError) {
-          if (insertError.code === "23505") {
-            console.warn("already voted for this card");
+        if (voteError) {
+          if (voteError.code === '23505') {
+            console.warn('already voted for this card');
           } else {
-            console.error("Failed to vote : ", insertError);
+            console.error('Failed to vote : ', JSON.stringify(voteError));
           }
         } else if (voteData) {
           // Add the new vote to the state
@@ -134,11 +122,7 @@ export default function AllRankingsPage() {
         }
       }
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        console.error(e.message);
-      } else {
-        console.error('Unexpected error during popularity vote : ', e);
-      }
+      console.error('Unexpected error during popularity vote : ', e);
     }
   };
 
@@ -153,7 +137,7 @@ export default function AllRankingsPage() {
   // For checking if you voted
   const isPopularityVoted = (cardId: number): boolean => {
     return votedCards.some(
-      (v) => v.fight_card_id === cardId && v.vote_type === "popularity"
+      (v) => v.fight_card_id === cardId && v.vote_type === 'popularity'
     );
   };
 
@@ -163,11 +147,17 @@ export default function AllRankingsPage() {
     setDisplayCount((prev) => prev + DISPLAY_INCREMENT);
   };
 
-  if (loading) return <div className="min-h-screen text-center p-4">読み込み中...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center mt-10">
+        <p className="text-gray-500">読み込み中...</p>
+      </div>
+    );
+  } 
 
   return (
     <div className="min-h-screen mt-4">
-      <Link href="/" className="text-gray-500 hover:text-blue-800 cursor-pointer">
+      <Link href="/" className="text-gray-500 hover:text-blue-800">
         ← ランキングトップに戻る
       </Link>
       {under10.length === 0 ? (
@@ -230,7 +220,7 @@ export default function AllRankingsPage() {
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}

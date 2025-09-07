@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { FaGoogle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
-import { signUp, signInWithGoogle } from '@/utils/supabaseUtils';
+import { signUp, signInWithGoogle } from '@/utils/supabaseBrowserUtils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,9 +39,9 @@ export default function RegisterPage() {
       return;
     }
 
+    setLoading(true)
     // Register an account 
     try {
-      setLoading(true)
       await signUp(email, password);
       router.push('/signup-confirm');
     } catch (e: unknown) {
@@ -50,10 +50,11 @@ export default function RegisterPage() {
         setErrorMsg(e.message);
       } else {
         console.error('Unexpected error during registration : ', e);
-        setErrorMsg('新規登録に失敗しました。');
+        setErrorMsg('不明なエラーが発生しました。しばらくしてから再試行してください。');
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
   };
 
   // For handling a google account register
@@ -62,11 +63,17 @@ export default function RegisterPage() {
     // Register a google account on Supabase
     const { error: oauthError } = await signInWithGoogle();
     if (oauthError) {
-      setErrorMsg('Googleでの登録に失敗しました');
+      setErrorMsg('Googleでの登録に失敗しました。しばらくしてから再試行してください。');
     }
   };
 
-  if (loading) return <div className="min-h-screen text-center p-4">アカウント作成中...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center mt-10">
+        <p className="text-gray-500">アカウント作成中...</p>
+      </div>
+    );
+  } 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -116,11 +123,11 @@ export default function RegisterPage() {
               type="checkbox"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
-              className="mr-2"
+              className="mr-2 cursor-pointer"
             />
             <span className="text-sm">
-              <Link href="/terms" className="text-blue-600 hover:underline cursor-pointer">利用規約</Link>と{' '}
-              <Link href="/privacy" className="text-blue-600 hover:underline cursor-pointer">プライバシーポリシー</Link>に同意する
+              <Link href="/terms" className="text-blue-600 hover:underline">利用規約</Link>と{' '}
+              <Link href="/privacy" className="text-blue-600 hover:underline">プライバシーポリシー</Link>に同意する
             </span>
           </div>
 
@@ -142,7 +149,7 @@ export default function RegisterPage() {
 
         <div className="text-center text-sm mt-4">
           すでにアカウントをお持ちの場合は{' '}
-          <Link href="/login" className="text-blue-600 hover:underline cursor-pointer">ログイン</Link>
+          <Link href="/login" className="text-blue-600 hover:underline">ログイン</Link>
         </div>
       </div>
     </div>

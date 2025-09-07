@@ -1,27 +1,17 @@
+export const dynamic = 'force-dynamic';
+
 import HomeClient from '@/app/HomeClient';
-import { getSupabaseServerClient} from '@/utils/supabaseServerClient';
+import { fetchFigherCards, getCurrentUser, fetchVotesByUserId } from '@/utils/supabaseServerUtils';
 import { FightCardUI, VoteCardUI } from '@/types/types';
 
 export default async function Home() {
-  const supabase = await getSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   // Fetch initial fight cards data
-  const { data: cardsData, error: cardsError } = await supabase
-    .from("fight_cards")
-    .select(`
-      id,
-      fighter1:fighters!fight_cards_fighter1_id_fkey ( id, name, gender ),
-      fighter2:fighters!fight_cards_fighter2_id_fkey ( id, name, gender ),
-      organization:organizations!fight_cards_organization_id_fkey ( id, name ),
-      weight_class:weight_classes!fight_cards_weight_class_id_fkey ( id, name, gender),
-      fighter1_votes,
-      fighter2_votes,
-      popularity_votes
-    `)
-    .order("popularity_votes", { ascending: false })
+  const { cardsData, cardsError } = await fetchFigherCards();
 
   let cards: FightCardUI[] = [];
+
   if (!cardsError && cardsData) {
     cards = cardsData.map((v) => ({
       id: v.id,
@@ -36,7 +26,7 @@ export default async function Home() {
   } else {
     return (
       <div className="flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-gray-500">
           データ取得に失敗しました
         </div>
       </div>
@@ -46,15 +36,7 @@ export default async function Home() {
   // Fetch initial votes data
   let votes: VoteCardUI[] = [];
   if (user?.id){
-    const { data: votesData, error: votesError } = await supabase
-      .from("votes")
-      .select(`
-        id,
-        fight_card_id,
-        vote_type,
-        vote_for
-      `)
-      .eq("user_id", user?.id)
+    const { votesData, votesError } = await fetchVotesByUserId(user.id);
     
     if (!votesError && votesData) {
       votes = votesData.map((v) => ({
@@ -66,7 +48,7 @@ export default async function Home() {
     } else {
       return (
       <div className="flex items-center justify-center">
-        <div className="text-center ">
+        <div className="text-gray-500">
           データ取得に失敗しました
         </div>
       </div>
@@ -75,7 +57,7 @@ export default async function Home() {
   }
   
   return (
-    <div>
+    <div className="min-h-screen px-4">
       <HomeClient initialFightCards={cards} initialVotedCards={votes}/>
     </div>
   );

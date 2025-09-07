@@ -6,7 +6,7 @@ export default function TermsPage() {
   return (
     <div className="bg-gray-50 shadow-md rounded-lg py-8 px-10 max-w-3xl mx-auto">
       <div>
-        <Link href="/signup" className="text-gray-500 hover:text-blue-800 cursor-pointer">
+        <Link href="/signup" className="text-gray-500 hover:text-blue-800">
           ← 登録画面に戻る
         </Link>
       </div>
@@ -121,6 +121,8 @@ export default function TermsPage() {
         <p>
           当社はユーザーが本規約違反、虚偽登録、長期間（90日以上）未利用、その他不適当と判断した場合に、
           利用制限、投稿削除、登録抹消等の措置を予告なく取ることができます。これらによる損害について当社は責任を負いません。
+          当社は、本サービスの健全な運営や品質維持のため必要と判断した場合、ユーザーの同意を得ることなく、対戦カードなどのコンテンツを削除することができます。
+          これによってユーザーに損害が生じた場合でも、当社は一切責任を負いません。
         </p>
       </section>
 
