@@ -1,9 +1,9 @@
 'use client'
-import React from "react";
-import { GiBoxingGlove } from "react-icons/gi";
+import React from 'react';
+import { GiBoxingGlove } from 'react-icons/gi';
 
-const GenderTab = ({ value, onChange }: { value: "male" | "female"; onChange: (newGender: "male" | "female") => void; }) => {
-  const tabs: { key: "male" | "female"; color: string }[] = [ { key: "male", color: "#000000" }, { key: "female", color: "#e3342f" }];
+const GenderTab = ({ value, onChange }: { value: 'male' | 'female'; onChange: (newGender: 'male' | 'female') => void; }) => {
+  const tabs: { key: 'male' | 'female'; color: string }[] = [ { key: 'male', color: '#000000' }, { key: 'female', color: '#e3342f' }];
 
   return (
     <div className="flex w-80">
@@ -26,6 +26,6 @@ const GenderTab = ({ value, onChange }: { value: "male" | "female"; onChange: (n
       ))}
     </div>
   );
-}
+};
 
 export default GenderTab;

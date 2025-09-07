@@ -1,31 +1,30 @@
-
-
 // Cotrol line breaks
 export const insertLineBreak = (name: string | undefined, maxLength: number): string => {
   const results: string[] = [];
-  let current = "";
+  let current = '';
   
-  name?.split("").forEach((char) => {
+  name?.split('').forEach((char) => {
     current += char;
     if (current.length >= maxLength) {
       results.push(current);
-      current = "";
+      current = '';
     }
   });
   if (current) results.push(current);
-  return results.join("\n");
+  
+  return results.join('\n');
 };
 
 // For preventing line breaks in certain characters
 export const noBreakDots = (name: string) => {
   //
   return name
-    .replace(/・/g, "\u2060・\u2060")
-    .replace(/\./g, "\u2060.\u2060")
-    .replace(/ー/g, "\u2060ー\u2060");
-}
+    .replace(/・/g, '\u2060・\u2060')
+    .replace(/\./g, '\u2060.\u2060')
+    .replace(/ー/g, '\u2060ー\u2060');
+};
 
-  // For checking if the fighter name is small enough to fit in the button
+// For checking if the fighter name is small enough to fit in the button
 export const isSmallFont = (name: string | undefined | null) => {
   const maxLength = 6;
   if (!name) return false;

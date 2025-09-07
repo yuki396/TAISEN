@@ -1,11 +1,19 @@
 'use client'
-import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import VoteGauge from "./VoteGauge";
-import { MdHowToVote } from "react-icons/md";
-import { supabase } from '@/utils/supabaseBrowserClient';
+import React, { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
+import VoteGauge from './VoteGauge';
+import { MdHowToVote } from 'react-icons/md';
 import { FightCardUI, VoteCardUI } from '@/types/types';
-import { getCurrentUser, isLoggedIn, fetchFightCards, fetchVotesForCurrentUser } from '@/utils/supabaseUtils';
+import { 
+  getCurrentUser, 
+  isLoggedIn, 
+  fetchFightCards, 
+  fetchVotesForCurrentUser,
+  fetchVoteByCardId,
+  deleteVote,
+  insertPopVote,
+  insertPreVote
+} from '@/utils/supabaseBrowserUtils';
 import { insertLineBreak, isSmallFont, noBreakDots } from '@/utils/textUtils';
 
 // For returning background style according to rank
@@ -34,54 +42,66 @@ type Props = {
   organization: string;
   weight: string;
   keyword: string;
-  gender: "male" | "female";
+  gender: 'male' | 'female';
 };
 
 const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, organization, keyword}: Props) => {
+  const [userId, setUserId] = useState<string | null>(null);
+
   const [fightCards, setFightCards] = useState<FightCardUI[]>(initialFightCards);
   const [filteredCards, setFilteredCards] = useState<FightCardUI[]>(initialFightCards);
   const [votedCards, setVotedCards] = useState<VoteCardUI[]>(initialVotedCards);
-  const [userId, setUserId] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
     (async () => {
-      // Get current userData
-      const user = await getCurrentUser();
-      if (user) setUserId(user.id);
+      // Display Loading 
+      setLoading(true);
+      
+      try {
+        // Get current userData
+        const user = await getCurrentUser();
+        if (user) setUserId(user.id);
 
-      // Fetch fight cards
-      const { cardsData, cardsError } = await fetchFightCards()
-      if (!cardsError && cardsData) {
-        const cards: FightCardUI[] = cardsData.map((v) => ({
-          id: v.id,
-          fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
-          fighter2: Array.isArray(v.fighter2) ? v.fighter2[0] ?? null : (v.fighter2 ?? null),
-          organization: Array.isArray(v.organization) ? v.organization[0] ?? null : (v.organization ?? null),
-          weight_class: Array.isArray(v.weight_class) ? v.weight_class[0] ?? null : (v.weight_class ?? null),
-          fighter1_votes: v.fighter1_votes ?? 0,
-          fighter2_votes: v.fighter2_votes ?? 0,
-          popularity_votes: v.popularity_votes ?? 0,
-        }));
-        setFightCards(cards);
-      } else {
-        console.error("Failed to fetch fight cards", cardsError);
-      }
-
-      // Fetch votes for ther current user
-      if (user?.id) {
-        const { votesData, votesError } = await fetchVotesForCurrentUser(user.id);
-        
-        if (!votesError && votesData) {
-          const votes: VoteCardUI[] = votesData.map((v) => ({
-            id: v.id ?? 0,
-            fight_card_id: v.fight_card_id ?? 0,
-            vote_type: v.vote_type ?? null,
-            vote_for: v.vote_for ?? null,
-          }));
-          setVotedCards(votes);
+        // Fetch fight cards
+        const { cardsData, cardsError } = await fetchFightCards();
+        if (cardsError) {
+          console.error('Failed to fetch fight cards', JSON.stringify(cardsError));
         } else {
-          console.error("Failed to fetch vote data", votesError)
+          const cards: FightCardUI[] = (cardsData || []).map((v) => ({
+            id: v.id,
+            fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
+            fighter2: Array.isArray(v.fighter2) ? v.fighter2[0] ?? null : (v.fighter2 ?? null),
+            organization: Array.isArray(v.organization) ? v.organization[0] ?? null : (v.organization ?? null),
+            weight_class: Array.isArray(v.weight_class) ? v.weight_class[0] ?? null : (v.weight_class ?? null),
+            fighter1_votes: v.fighter1_votes ?? 0,
+            fighter2_votes: v.fighter2_votes ?? 0,
+            popularity_votes: v.popularity_votes ?? 0,
+          }));
+          setFightCards(cards);
         }
+
+        // Fetch votes for ther current user
+        if (user?.id) {
+          const { votesData, votesError } = await fetchVotesForCurrentUser(user.id);
+          
+          if (votesError) {
+            console.error('Failed to fetch vote data', JSON.stringify(votesError));
+          } else {
+            const votes: VoteCardUI[] = (votesData || []).map((v) => ({
+              id: v.id ?? 0,
+              fight_card_id: v.fight_card_id ?? 0,
+              vote_type: v.vote_type ?? null,
+              vote_for: v.vote_for ?? null,
+            }));
+            setVotedCards(votes);
+          }
+        }
+      } catch (e:unknown) {
+        console.error('Unexpected error during getting initial fight cards : ', e);
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
@@ -91,10 +111,10 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
     const filteredData = fightCards.filter((card) => {
       // By weight
       const matchWeight =
-        weight === "指定なし" || card.weight_class?.name === weight;
+        weight === '指定なし' || card.weight_class?.name === weight;
       // By organization
       const matchOrganization =
-        organization === "指定なし" || card.organization?.name === organization;
+        organization === '指定なし' || card.organization?.name === organization;
       // By keyword
       const matchKeyword =
         card.fighter1?.name.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -132,43 +152,34 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
       // Confirm login
       const loggedIn = await isLoggedIn();
       if (!loggedIn) {
-        alert('ログインしてください')
-        return
+        alert('ログインしてください');
+        return;
       };
 
       // Get prediction vote data from userID
-      const { data: existingVoteData, error: fetchError } = await supabase
-        .from("votes")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("fight_card_id", cardId)
-        .eq("vote_type", "prediction")
-        .maybeSingle();
+      const { voteData, voteError } = await fetchVoteByCardId(userId, cardId, 'prediction')
 
-      if (fetchError) {
-        console.error("Failed to fetch vote data", fetchError);
+      if (voteError) {
+        console.error('Failed to fetch vote data', JSON.stringify(voteError));
         return;
       }
 
       // Check if you've already voted
-      if (existingVoteData) {
+      if (voteData) {
         // Delete prediction vote data from votes table
-        const { error: deleteError } = await supabase
-          .from("votes")
-          .delete()
-          .eq("id", existingVoteData.id);
+        const voteError = await deleteVote(voteData.id);
 
-        if (deleteError) {
-          console.error("Failed to delete vote : ", deleteError);
+        if (voteError) {
+          console.error('Failed to delete vote : ', JSON.stringify(voteError));
         } else {
           // Remove the vote from votedCards state
           setVotedCards((prev) => 
             prev.filter((v) => 
-              v.id !== existingVoteData.id
+              v.id !== voteData.id
             )
           );
           // Update the vote counts in fightCards
-          const deletedSide = votedCards.find(v => v.id === existingVoteData.id);
+          const deletedSide = votedCards.find(v => v.id === voteData.id);
           setFightCards((prev) =>
             prev.map((c) =>
               c.id === cardId
@@ -185,22 +196,13 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
         }
       } else {
         // Insert prediction vote data into votes table
-        const { data: voteData, error: insertError } = await supabase
-        .from("votes")
-        .insert({
-          user_id: userId,
-          fight_card_id: cardId,
-          vote_type: "prediction",
-          vote_for: votedSide,
-        })
-        .select()
-        .single();
+        const { voteData, voteError } = await insertPreVote(userId, cardId, 'prediction', votedSide);
 
-        if (insertError) {
-          if (insertError.code === "23505") {
-            console.warn("already voted for this card");
+        if (voteError) {
+          if (voteError.code === '23505') {
+            console.warn('already voted for this card');
           } else {
-            console.error("Failed to insert vote data : ", insertError);
+            console.error('Failed to insert vote data : ', JSON.stringify(voteError));
           }
         } else if(voteData) {
           // Add the new vote to the state
@@ -221,11 +223,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
         }
       }
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        console.error(e.message)
-      } else {
-        console.error('Unexpected error during prediction vote : ', e)
-      }
+      console.error('Unexpected error during prediction vote : ', e);
     }
   }
 
@@ -235,43 +233,34 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
       // Confirm login
       const loggedIn = await isLoggedIn();
       if (!loggedIn) {
-        alert('ログインしてください')
-        return
+        alert('ログインしてください');
+        return;
       };
 
       // Get popularity vote data from userID
-      const { data: existingVoteData, error: fetchError } = await supabase
-        .from("votes")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("fight_card_id", cardId)
-        .eq("vote_type", "popularity")
-        .maybeSingle();
+      const { voteData, voteError } = await fetchVoteByCardId(userId, cardId, 'popularity');
       
-      if (fetchError) {
-        console.error("Failed to fetch vote data : ", fetchError);
+      if (voteError) {
+        console.error('Failed to fetch vote data : ', JSON.stringify(voteError));
         return;
       }
 
       // Check the limit of the number of popular votes
-      const popularityCount = votedCards.filter(v => v.vote_type === "popularity").length;
-      if (!existingVoteData && popularityCount >= 30) {
-        alert("人気投票は30件までです。");
+      const popularityCount = votedCards.filter(v => v.vote_type === 'popularity').length;
+      if (!voteData && popularityCount >= 30) {
+        alert('人気投票は30件までです。');
         return;
       }
       // Check if you've already voted
-      if (existingVoteData) {
+      if (voteData) {
         // Delete popularity vote data from votes table
-        const { error: deleteError } = await supabase
-          .from("votes")
-          .delete()
-          .eq("id", existingVoteData.id);
+        const voteError = await deleteVote(voteData.id);
 
-        if (deleteError) {
-          console.error("Failed to delete vote : ", deleteError);
+        if (voteError) {
+          console.error('Failed to delete vote : ', JSON.stringify(voteError));
         } else {
           // Remove the vote from the state
-          setVotedCards((prev) => prev.filter((v) => v.id !== existingVoteData.id));
+          setVotedCards((prev) => prev.filter((v) => v.id !== voteData.id));
           setFightCards((prev) =>
             prev.map((c) =>
               c.id === cardId
@@ -285,21 +274,13 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
         }
       } else {
         // Insert popularity vote data from votes table
-        const { data: voteData, error: insertError } = await supabase
-        .from("votes")
-        .insert({
-          user_id: userId,
-          fight_card_id: cardId,
-          vote_type: "popularity",
-        })
-        .select()
-        .single();
+        const { voteData, voteError } = await insertPopVote(userId, cardId, 'popularity');
 
-        if (insertError) {
-          if (insertError.code === "23505") {
-            console.warn("already voted for this card");
+        if (voteError) {
+          if (voteError.code === '23505') {
+            console.warn('already voted for this card');
           } else {
-            console.error("Failed to insert vote data : ", insertError);
+            console.error('Failed to insert vote data : ', JSON.stringify(voteError));
           }
         } else if (voteData) {
           // Add the new vote to the state
@@ -317,11 +298,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
         }
       }
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        console.error(e.message)
-      } else {
-        console.error('Unexpected error during popularity vote : ', e)
-      }
+      console.error('Unexpected error during popularity vote : ', e);
     }
   };
 
@@ -335,26 +312,32 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
   // For returning witch side you voted for from 
   const predictionVoteFor = (cardId: number): number | null => {
     if (!votedCards) return null;
-    const vote = votedCards.find( (v) => v.fight_card_id === cardId && v.vote_type === "prediction" );
+    const vote = votedCards.find( (v) => v.fight_card_id === cardId && v.vote_type === 'prediction' );
     return vote?.vote_for ?? null;
   };
 
   // For returning whether you voted for popularity vote
   const isPopularityVoted = (cardId: number): boolean => {
     if (!votedCards) return false;
-    return votedCards.some( (v) => v.fight_card_id === cardId && v.vote_type === "popularity" );
+    return votedCards.some( (v) => v.fight_card_id === cardId && v.vote_type === 'popularity' );
   };
+
+  if (loading) {
+    return(
+      <div className="flex justify-center">
+        <p className="text-gray-500 my-6">読み込み中...</p>
+      </div>
+    );
+  }
 
   // No cards that match your search criteria.
   if (filteredCards.length === 0) {
     return (
       <div className="my-8 text-center text-gray-500">
-        検索条件に一致する対戦カードが見つかりませんでした。
+        検索条件に一致する対戦カードが見つかりませんでした
       </div>
     );
-  };
-
-  if (!fightCards) return <div>読み込み中...</div>;
+  }
 
   return (
     <div className="px-5 mt-10">
@@ -487,7 +470,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
       </div>
       { 10 < filteredCards.length && (
         <div className="text-center mt-8 mb-3">
-          <Link href="/allrankings" className="text-gray-500 hover:text-blue-800 cursor-pointer">
+          <Link href="/allrankings" className="text-gray-500 hover:text-blue-800">
             10位以降のランキングを見る
           </Link>
         </div>

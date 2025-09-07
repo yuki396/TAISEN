@@ -1,5 +1,4 @@
-"use client";
-
+'use client'
 const VoteGauge = ({ leftVotes, rightVotes} :{ leftVotes:number; rightVotes:number; }) => {
   const total = leftVotes + rightVotes;
   const leftPercent = total > 0 ? Math.round((leftVotes / total) * 100): 50;

@@ -2,44 +2,44 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithGoogle, signIn } from '@/utils/supabaseUtils';
+import { signInWithGoogle, signIn } from '@/utils/supabaseBrowserUtils';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setErrorMsg] = useState('');
 
   // For handling email aond password login
   const handleEmailLogin = async (e: React.FormEvent) => {
     // Prevent the browser's default behavior (automatic page reload)
     e.preventDefault();
 
-    setError('');
+    setErrorMsg('');
 
     try {
       await signIn(email, password);
-      router.push('/account');
+      router.push('/');
     } catch (e: unknown) {
       if (e instanceof Error) {
-        console.error('Login error:', e);
-        setError(e.message);
+        console.error('Failed to register : ', e);
+        setErrorMsg(e.message);
       } else {
-        console.error('Unexpected error during login:', e);
-        setError('ログインに失敗しました');
+        console.error('Unexpected error during registration : ', e);
+        setErrorMsg('不明なエラーが発生しました。しばらくしてから再試行してください。');
       }
     }
   };
 
   // For handling Google login
   const handleGoogleLogin = async () => {
-    setError('');
+    setErrorMsg('');
 
     const { error: oauthError } = await signInWithGoogle();
 
     if (oauthError) {
-      console.error('Google login error:', oauthError);
-      setError('Googleでのログインに失敗しました');
+      console.error('Google login error:', JSON.stringify(oauthError));
+      setErrorMsg('Googleでのログインに失敗しました。しばらくしてから再試行してください。');
     }
   };
 
@@ -91,14 +91,14 @@ export default function LoginPage() {
         </button>
 
         <div className="text-center mt-4">
-          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline cursor-pointer">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
             パスワードをお忘れですか？
           </Link>
         </div>
 
         <div className="mt-2 text-center">
           <span className="text-sm">アカウントをお持ちでない場合は </span>
-          <Link href="/signup" className="text-sm text-blue-600 hover:underline cursor-pointer">
+          <Link href="/signup" className="text-sm text-blue-600 hover:underline">
             新規登録
           </Link>
         </div>

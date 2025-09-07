@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { fetchOrganizations } from "@/utils/supabaseUtils";
+import { fetchOrganizations } from '@/utils/supabaseBrowserUtils';
 import { Organization } from '@/types/types';
 
 const OrganizationSelect = ({ value, onChange }: { value: string; onChange: (newOrg: string) => void; }) => {
@@ -9,21 +9,25 @@ const OrganizationSelect = ({ value, onChange }: { value: string; onChange: (new
   useEffect(() => {
     (async () => {
       const { oData, oError } = await fetchOrganizations();
-      if (!oError && oData) {
-        setOrganizations(oData);
+      if (oError) {
+        console.error('Failed to fetch organizations : ', JSON.stringify(oError));
       } else {
-        console.error("Failed to fetch organizations : ", oError);
+        const withDefault = [
+          { id: -1, name: '指定なし' },
+          ...(oData ?? [])
+        ];
+        setOrganizations(withDefault ?? []);
       }
     })();
   }, []);
     
   return (
-    <div className="md:col-span-2 md:w-full w-[150]">
+    <div className="col-span-1 lg:col-span-2 lg:w-full">
       <h2 className="text-lg mb-1">団体</h2>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full px-3 py-2 cursor-pointer"
+        className="font-bold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 w-full cursor-pointer"
       >
         {organizations.map((org) => (
           <option key={org.id} value={org.name}>

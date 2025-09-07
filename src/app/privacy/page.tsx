@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <div className="bg-gray-50 shadow-md rounded-lg py-8 px-10 max-w-3xl mx-auto">
       <div>
-        <Link href="/signup" className="text-gray-500 hover:text-blue-800 cursor-pointer">
+        <Link href="/signup" className="text-gray-500 hover:text-blue-800">
           ← 登録画面に戻る
         </Link>
       </div>

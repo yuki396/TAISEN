@@ -1,41 +1,64 @@
 'use client'
 import { useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/utils/supabaseBrowserClient';
+import { supabase } from '@/libs/supabaseBrowserClient';
 import { useRouter } from 'next/navigation';
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [error, setErrorMsg] = useState('')
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [error, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // For handling the password reset 
   const handleResetPassword = async (e: React.FormEvent) => {
     // Prevent the browser's default behavior (automatic page reload)
-    e.preventDefault()
+    e.preventDefault();
 
-    setErrorMsg('')
+    setErrorMsg('');
 
-    // Validate email format
-    const emailRegex = /^[^@]+@[^@]+\.[^@]+$/
-    if (!emailRegex.test(email)) {
-      setErrorMsg('正しいメールアドレスを入力してください。')
-      return
+    setLoading(true)
+    try {
+      // Validate email format
+      const emailRegex = /^[^@]+@[^@]+\.[^@]+$/
+      if (!emailRegex.test(email)) {
+        setErrorMsg('正しいメールアドレスを入力してください。');
+        return;
+      }
+
+      // Reset password
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email, 
+        { redirectTo: `${location.origin}/reset-password` }
+      );
+
+      if (resetError) {
+        if (resetError.status === 429 || resetError.code === 'over_email_send_rate_limit') {
+          console.error('Failed to reset password for email:', JSON.stringify(resetError));
+          setErrorMsg("試行回数の制限を超えました。しばらくしてから再試行してください。");
+          return;
+        }
+        console.error('Failed to reset password for email:', JSON.stringify(resetError));
+        setErrorMsg(`メールの送信に失敗しました。しばらくしてから再試行してください。`);
+        return;
+      } else {
+        router.push('/reset-send');
+      }
+    } catch (e: unknown) {
+      console.error('Unexpected error during sending reset mail : ', e);
+      setErrorMsg('不明なエラーが発生しました。しばらくしてから再試行してください。');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Reset password
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email, 
-      { redirectTo: `${location.origin}/reset-password` }
-    )
-
-    if (resetError) {
-      console.error('Failed to reset password for email:', resetError)
-      setErrorMsg(`メールの送信に失敗しました。`)
-    } else {
-      router.push('/reset-send')
-    }
-  }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center mt-10">
+        <p className="text-gray-500">送信中...</p>
+      </div>
+    );
+  } 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -50,9 +73,9 @@ export default function ForgotPasswordPage() {
           登録したメールアドレスを入力してください。<br />
           パスワード再設定メールを送信します。
         </p>
-        <form onSubmit={handleResetPassword}>
-          {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-2">{error}</p>}
-          <label htmlFor="email" className="text-sm font-medium mt-7">
+        {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-2">{error}</p>}
+        <form onSubmit={handleResetPassword} className="mt-5">
+          <label htmlFor="email" className="text-sm font-medium mt-10">
             メールアドレス
           </label>
           <input
@@ -62,7 +85,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border border-gray-300 rounded px-3 py-2 mt-3 w-full"
+            className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
           />
           <button
             type="submit"
@@ -73,7 +96,7 @@ export default function ForgotPasswordPage() {
         </form>
         <div className="text-center text-sm mt-4">
           アカウントをお持ちでない場合は{' '}
-          <Link href="/signup" className="text-blue-600 hover:underline cursor-pointer">
+          <Link href="/signup" className="text-blue-600 hover:underline">
             新規登録
           </Link>
         </div>
