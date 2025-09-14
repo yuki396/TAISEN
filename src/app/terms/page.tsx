@@ -4,15 +4,15 @@ import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <div className="bg-gray-50 shadow-md rounded-lg py-8 px-10 max-w-3xl mx-auto">
+    <div className="bg-gray-20 shadow-md rounded-lg py-4 sm:py-8 px-5 sm:px-10 mx-3">
       <div>
-        <Link href="/signup" className="text-gray-500 hover:text-blue-800">
-          ← 登録画面に戻る
+        <Link href="/signup" className="text-sm text-blue-600 hover:underline">
+          ← 登録ページに戻る
         </Link>
       </div>
 
-      <h1 className="text-3xl font-bold mt-8">利用規約（Terms of Service）</h1>
-      <p className="mt-4">最終更新日：2025年7月9日</p>
+      <h1 className="text-2xl sm:text-3xl font-bold mt-6 sm:mt-8">利用規約<br/>（Terms of Service）</h1>
+      <p className="mt-4">最終更新日：2025年9月10日</p>
       <p className="mt-6">
         この利用規約（以下、「本規約」といいます。）は、TAISEN（以下、「当社」といいます。）が、このウェブサイトおよびアプリケーション上で提供するすべてのサービス（以下、「本サービス」といいます。）の利用条件を定めるものです。
         登録ユーザーの皆さま（以下、「ユーザー」といいます。）は、本規約に従って本サービスを利用するものとします。本サービスを利用することにより、ユーザーは本規約に同意したものとみなされます。
@@ -21,7 +21,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第1条（適用と変更）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           本規約は、ユーザーと当社との間の本サービス利用に関する一切に適用されます。
           当社は本サービスに関し、個別のガイドラインや規定を定めることがあり、これらは本規約の一部を構成します。
           両者が矛盾する場合は個別規定が優先し、必要に応じて本規約を変更できます。
@@ -31,7 +31,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第2条（利用登録）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           本サービスの利用を希望する者は、本規約に同意のうえ当社所定の方法で登録申請を行い、
           当社が承認した時点で利用登録が完了します。
           未成年者が利用登録を行う場合、法定代理人の同意が必要となる場合があります。
@@ -51,7 +51,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第3条（ユーザーIDおよびパスワードの管理）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           ユーザーは自己の責任においてID・パスワードを適切に管理し、第三者に譲渡・貸与してはなりません。
           当社は、ID・パスワードが正しく入力されてログインされた場合、そのユーザー本人による利用とみなします。
           その結果生じた責任はユーザーが負います。
@@ -64,7 +64,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第4条（料金および支払方法）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           本サービスは基本利用無料ですが、将来的に有料機能を提供する場合、その料金および支払方法は
           別途当社が定め、サイト内および本規約にて告知します。
         </p>
@@ -80,7 +80,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第6条（禁止事項）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           ユーザーは、本サービスにおいて以下の行為をしてはなりません。
         </p>
         <ul className="list-disc list-inside gap-y-1 mt-2 indented-li">
@@ -99,7 +99,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第7条（本サービスの停止等）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社はシステム保守、点検、更新、地震、落雷、火災、停電、感染症流行などの不可抗力、
           その他運営上または技術上必要と判断した場合に、事前通知なく本サービスの全部または一部を停止・中断できます。
           当社はこれらによる損害について一切責任を負いません。
@@ -108,7 +108,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第8条（著作権および知的財産権）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           本サービスに関する著作権、商標権、その他知的財産権は当社または権利者に帰属します。
           ユーザーは当社の許諾なく情報を複製、転載、配布、改変、商用利用できません。
           投稿コンテンツの著作権はユーザーまたは既存権利者に留保されますが、当社は運営上必要な範囲で利用でき、
@@ -118,7 +118,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第9条（利用制限および登録抹消）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社はユーザーが本規約違反、虚偽登録、長期間（90日以上）未利用、その他不適当と判断した場合に、
           利用制限、投稿削除、登録抹消等の措置を予告なく取ることができます。これらによる損害について当社は責任を負いません。
           当社は、本サービスの健全な運営や品質維持のため必要と判断した場合、ユーザーの同意を得ることなく、対戦カードなどのコンテンツを削除することができます。
@@ -128,7 +128,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第10条（保証の否認および免責事項）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社は本サービスの正確性、適法性、有用性、特定目的適合性等を保証せず、本サービス利用による損害につき当社に故意または重大な過失がない限り責任を負いません。
           逸失利益、間接損害、特別損害など、予見可能性を問わない損害について当社は責任を負いません。
           ユーザー間及びユーザーと第三者との紛争についても関与せず責任を負いません。
@@ -137,14 +137,14 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第11条（サービス内容の変更等）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社は予告なく本サービスの内容を変更、追加、中断、終了することができ、これによる損害について一切責任を負いません。
         </p>
       </section>
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第12条（個人情報の取扱い）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社は、ユーザーの個人情報を別途定める「プライバシーポリシー」に従って適切に取り扱います。
           当社は、ユーザーが提供した情報を個人を特定できない形で統計的情報として利用・公開でき、ユーザーはこれに異議を唱えないものとします。
         </p>
@@ -152,7 +152,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第13条（通知または連絡）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           当社からユーザーへの通知は、本サービス内告知、登録メールアドレスへの送信、または当社が適当と判断する方法で行い、
           いずれも到達したものとみなします。
         </p>
@@ -160,7 +160,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第14条（権利義務の譲渡の禁止）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           ユーザーは当社の書面による事前承認なく、本規約に基づく権利または義務を第三者に譲渡または担保に供与してはなりません。
         </p>
       </section>
@@ -174,7 +174,7 @@ export default function TermsPage() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold mt-2">第16条（準拠法および管轄裁判所）</h2>
-        <p>
+        <p className="text-sm sm:text-base mt-2">
           本規約の解釈・適用には日本法を準拠法とし、本サービスに関する東京地方裁判所を管轄裁判所とします。
         </p>
       </section>

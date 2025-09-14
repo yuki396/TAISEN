@@ -14,9 +14,9 @@ export default function SendCompletePage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="bg-white p-8 rounded shadow-md">
-        <p className="lg:text-center text-4xl font-bold mt-3">パスワードのリセットが完了しました</p>
+    <main className="container flex justify-center py-8">
+      <div className="rounded shadow-md border border-gray-100 p-8 mx-3">
+        <p className="lg:text-center text-2xl sm:text-3xl font-bold mt-3">パスワードのリセットが完了しました</p>
         <p className="lg:text-center text-gray-600 text-xl mt-7">数秒後に自動的にログイン画面へ移動します。<br/>サービスをお楽しみください。</p>
         <div className="text-center mt-6">
           <Link href="/login" className="text-blue-600 hover:underline">

@@ -51,8 +51,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white rounded shadow-md p-8 w-100">
+    <div className="container flex justify-center py-8">
+      <div className="rounded shadow-md border border-gray-100 p-8 mx-3 w-100">
         <h2 className="text-center text-xl font-bold">新しいパスワードを設定</h2>
         {message && <p className="text-center text-sm text-green-600 mt-4">{message}</p>}
         {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-4">{error}</p>}

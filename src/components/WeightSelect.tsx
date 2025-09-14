@@ -23,11 +23,11 @@ const WeightSelect = ({ value, onChange, gender }: { value: string; onChange: (n
 
   return (
     <div className="col-span-1 lg:col-span-2 lg:w-full">
-      <h2 className="text-lg mb-1">階級</h2>
+      <h2 className="text-base sm:text-lg mb-1">階級</h2>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="font-bold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 w-full cursor-pointer"
+        className="text-sm sm:text-base font-bold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 w-full cursor-pointer"
       >
         {weightClasses.map(w => (
           <option key={w.id} value={w.name}>

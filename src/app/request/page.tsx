@@ -146,11 +146,11 @@ export default function PlayerRequestPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col p-8 rounded border border-gray-300 gap-y-4 w-120 lg:w-160">
-        <h1 className="text-3xl font-bold">選手申請（追加/削除）</h1>
-        <p className="text-gray-600">
-          選手申請を通して、選手データの最新化にご協力いただけるとありがたいです。
+    <div className="container flex justify-center px-4 py-8">
+      <div className="flex flex-col p-4 sm:p-8 rounded border border-gray-300 gap-y-2 sm:gap-y-4 mx-3 lg:w-160">
+        <h1 className="text-2xl sm:text-3xl font-bold">選手申請（追加/削除）</h1>
+        <p className="text-sm sm:text-base text-gray-600">
+          選手申請を通して、選手データの最新化にご協力いただけるとありがたいです。<br/>
           申請に関する承諾/拒否は運営側の判断にて行わせていただきます。
         </p>
 
@@ -160,7 +160,7 @@ export default function PlayerRequestPage() {
           </div>
         )}
 
-        <label className="text-gray-700 font-medium mt-2">申請項目</label>
+        <label className="text-gray-700 font-medium mt-4 sm:mt-2">申請項目</label>
         <div className="flex gap-x-3">
           <label className="border border-gray-300 rounded px-3 py-2 cursor-pointer">
             <input
@@ -171,7 +171,7 @@ export default function PlayerRequestPage() {
               onChange={(e) => setRequestType(e.target.value as "add" | "delete")}
               className="mr-1"
             />
-            選手を追加（登録）
+            選手を追加
           </label>
           <label className="border border-gray-300 rounded px-3 py-2 cursor-pointer">
             <input
@@ -182,7 +182,7 @@ export default function PlayerRequestPage() {
               onChange={(e) => setRequestType(e.target.value as "add" | "delete")}
               className="mr-1"
             />
-            選手を削除（解除）
+            選手を削除
           </label>
         </div>
 
@@ -235,7 +235,7 @@ export default function PlayerRequestPage() {
           )}
 
           <div className="flex items-center justify-center">
-            <button type="submit" className="text-lg text-white font-bold rounded-lg shadow bg-red-600 hover:bg-red-700 transition duration-200 mt-5 px-6 py-2 cursor-pointer">
+            <button type="submit" className="text-base sm:text-lg text-white font-bold rounded-lg shadow bg-red-600 hover:bg-red-700 transition duration-200  mt-3 sm:mt-5 px-6 py-2 cursor-pointer">
               申請する
             </button>
           </div>

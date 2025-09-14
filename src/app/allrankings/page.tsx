@@ -142,22 +142,22 @@ export default function AllRankingsPage() {
   };
 
   // For displaying more cards
-  const DISPLAY_INCREMENT = 20;
+  const DISPLAY_INCREMENT = 20
   const handleLoadMore = () => {
     setDisplayCount((prev) => prev + DISPLAY_INCREMENT);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center mt-10">
+      <div className="container flex justify-center mx-auto mt-30">
         <p className="text-gray-500">読み込み中...</p>
       </div>
     );
   } 
 
   return (
-    <div className="min-h-screen mt-4">
-      <Link href="/" className="text-gray-500 hover:text-blue-800">
+    <div className="container mx-auto mt-4">
+      <Link href="/" className="ml-3 sm:ml-0 text-gray-500 hover:text-blue-800">
         ← ランキングトップに戻る
       </Link>
       {under10.length === 0 ? (
@@ -165,31 +165,31 @@ export default function AllRankingsPage() {
           <p className="text-2xl text-gray-400">対戦カードがありません</p>
         </div>
       ) : (
-        <div className="grid justify-center items-center gap-5 md:grid-cols-2 lg:grid-cols-3 mt-8">
+        <div className="grid justify-center items-center gap-5 md:grid-cols-2 lg:grid-cols-3 mt-8 mx-5">
           {under10.map((card, index) => {
             const popVoted = !!isPopularityVoted(card.id);
             return(
               <div
                 key={card.id}
-                className="relative bg-white rounded-lg px-6 py-3 h-[240px] min-w-[200px] md:min-w-[300px] lg:min-w-[300px] 
+                className="relative rounded-lg px-6 py-3 h-[240px] min-w-[200px] md:min-w-[300px] lg:min-w-[310px] 
                             shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                             hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
               >
-                <div className="absolute top-2 left-2 text-sm font-bold bg-gray-100 rounded  px-2 py-1">
+                <div className="absolute top-2 left-2 text-sm text-black font-bold bg-gray-100 rounded px-1 py-1">
                   {index + 11}位
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center text-center gap-x-4 mt-9 h-[90px]">
                     <div 
-                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[100px]
-                      ${isSmallFont(card.fighter1?.name) ? "text-lg" : "text-xl"}`}
+                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded py-1 min-w-[110px]
+                      ${isSmallFont(card.fighter1?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}`}
                     >
                       {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
                     </div>
                     <span className="text-xl font-semibold">vs</span>
                     <div 
-                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[100px]
-                      ${isSmallFont(card.fighter2?.name) ? "text-lg" : "text-xl"}`}
+                      className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded py-1 min-w-[110px]
+                      ${isSmallFont(card.fighter2?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}`}
                     >
                       {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
                     </div>

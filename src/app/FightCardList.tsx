@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import VoteGauge from './VoteGauge';
+import VoteGauge from '@/components/VoteGauge';
 import { MdHowToVote } from 'react-icons/md';
 import { FightCardUI, VoteCardUI } from '@/types/types';
 import { 
@@ -324,7 +324,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
 
   if (loading) {
     return(
-      <div className="flex justify-center">
+      <div className="container flex justify-center mx-auto mt-10">
         <p className="text-gray-500 my-6">読み込み中...</p>
       </div>
     );
@@ -340,9 +340,9 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
   }
 
   return (
-    <div className="px-5 mt-10">
+    <div className="mx-3 mt-10">
       {/* Top 3 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-3">
         {top3.map((card, idx) => {
           const [leftPct, rightPct] = calcPercent(card.fighter1_votes, card.fighter2_votes);
           const votedPrediction = predictionVoteFor(card.id);
@@ -351,7 +351,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
           return (
             <div
               key={card.id}
-              className={`relative bg-white px-6 py-5 h-[400px] 
+              className={`relative px-1 py-2 sm:py-3 sm:h-[360px] px-2
                           shadow-[0_-4px_10px_rgba(255,0,0,0.4),0_4px_10px_rgba(255,0,0,0.4)] 
                           hover:shadow-[0_-8px_20px_rgba(255,0,0,0.8),0_8px_20px_rgba(255,0,0,0.8)] 
                           ${getRankBorderColor(idx + 1)}`}
@@ -359,10 +359,10 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
               <div className={`absolute top-2 left-2 text-sm font-bold px-2 py-1 rounded ${getRankStyle(idx + 1)}`}>
                 {idx + 1}位
               </div>
-              <div className="flex gap-x-2 mt-8 h-[130px]">
+              <div className="flex gap-x-3 lg:gap-x-1 mt-8 h-[130px]">
                 <button 
-                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-2 py-1 min-w-[100px] h-full cursor-pointer
-                  ${isSmallFont(card.fighter1?.name) ? "text-xl" : "text-2xl"}
+                  className={`flex-1 font-semibold whitespace-pre-line break-keep rounded py-1 min-w-[90px] h-full cursor-pointer
+                  ${isSmallFont(card.fighter1?.name) ? "sm:text-xl text-lg" : "sm:text-2xl text-xl"}
                   ${votedPrediction === 1 ? "border-2 border-red-300 bg-red-50" : "border border-transparent hover:border-red-300"}`} 
                   onClick={() => handlePredictionVote(card.id, 1)}
                 >
@@ -370,42 +370,42 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 </button>
                 <span className="flex items-center text-2xl font-semibold">vs</span>
                 <button 
-                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-2 py-1 h-full min-w-[100px] cursor-pointer
-                  ${isSmallFont(card.fighter2?.name) ? "text-xl" : "text-2xl"}
+                  className={`flex-1 font-semibold whitespace-pre-line break-keep rounded py-1 min-w-[90px] h-full cursor-pointer
+                  ${isSmallFont(card.fighter2?.name) ? "sm:text-xl text-lg" : "sm:text-2xl text-xl"}
                   ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "border border-transparent hover:border-blue-300"}`} 
                   onClick={() => handlePredictionVote(card.id, 2)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
                 </button>
               </div>
-              <div className="flex gap-x-3 mt-4">
-                <span className="bg-gray-100 rounded px-1 py-1">{card.organization?.name}</span>
-                <span className="bg-gray-100 rounded px-1 py-1">{card.weight_class?.name}</span>
+              <div className="flex gap-x-3 mx-4 sm:mx-0 mt-2 sm:mt-4">
+                <span className="text-black bg-gray-100 rounded px-1 py-1">{card.organization?.name}</span>
+                <span className="text-black bg-gray-100 rounded px-1 py-1">{card.weight_class?.name}</span>
               </div>
-              <div className="grid px-1 py-3 mt-5">
-                <span className="text-center">勝敗予想</span>
+              <div className="grid px-3 mx-2 sm:mx-0 py-3 sm:px-1 mt-1 sm:mt-2">
+                <span className="text-center font-bold">勝敗予想</span>
                 <div className="flex justify-between text-sm text-gray-700">
                   <span>{leftPct}%</span>
                   <span>{rightPct}%</span>
                 </div>
                 <VoteGauge leftVotes={card.fighter1_votes} rightVotes={card.fighter2_votes} />
               </div>
-              <div className="flex gap-x-1 items-center mt-3 cursor-pointer" onClick={() => handlePopularityVote(card.id)}>
+              <div className="flex gap-x-1 items-center sm:mt-3 px-2 sm:px-0 cursor-pointer" onClick={() => handlePopularityVote(card.id)}>
                 <MdHowToVote size={24} />
-                <span className="text-sm text-gray-600">{card.popularity_votes}</span>
+                <span className="text-sm text-gray-600 font-bold">{card.popularity_votes}</span>
+                {popVoted && (
+                  <div className="text-sm font-bold px-2 sm:px-0">
+                    投票済み
+                  </div>
+                )}
               </div>
-              {popVoted && (
-                <div className="text-sm font-bold">
-                  投票済み
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
       {/* Under 4 */}
-      <div className="flex flex-col gap-y-6 mt-15">
+      <div className="flex flex-col gap-y-6 mt-10 sm:mt-15">
         {others.map((card, idx) => {
           const [leftPct, rightPct] = calcPercent(card.fighter1_votes, card.fighter2_votes);
           const votedPrediction = predictionVoteFor(card.id);
@@ -414,17 +414,17 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
           return (
             <div
               key={card.id}
-              className="relative grid lg:grid-cols-12 lg:grid-rows-12 rounded-lg px-8 lg:px-0 pt-10 pb-5 lg:py-0 h-auto
+              className="relative grid lg:grid-cols-12 lg:grid-rows-12 rounded-lg pt-10 sm:pt-6 pb-2 sm:pb-0 px-2
                           shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                           hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
             >
               <div className={`absolute top-2 left-2 text-sm font-bold rounded px-2 py-1 ${getRankStyle(idx + 4)}`}>
                 {idx + 4}位
               </div>
-              <div className="flex items-center gap-x-2 lg:gap-x-6 lg:row-start-2 lg:row-end-10 lg:col-start-1 lg:col-end-6 lg:pl-14 lg:pr-5 h-[120px] lg:h-[130px]">
+              <div className="flex items-center gap-x-3 lg:gap-x-2 lg:row-start-2 lg:row-end-10 lg:col-start-1 lg:col-end-6 lg:pl-6 lg:pr-6 h-[120px] lg:h-[130px]">
                 <button 
-                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[110px] h-full cursor-pointer
-                  ${isSmallFont(card.fighter1?.name) ? "text-lg" : "text-xl"}
+                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded sm:min-w-[130px] min-w-[90px] h-full cursor-pointer
+                  ${isSmallFont(card.fighter1?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}
                   ${votedPrediction === 1 ? "border-2 border-red-300 bg-red-50" : "border border-transparent hover:border-red-300"}`} 
                   onClick={() => handlePredictionVote(card.id, 1)}
                 >
@@ -432,21 +432,21 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 </button>
                 <span className="text-xl font-semibold">vs</span>
                 <button
-                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded px-3 py-1 min-w-[100px] h-full cursor-pointer
-                  ${isSmallFont(card.fighter2?.name) ? "text-lg" : "text-xl"}
+                  className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded sm:min-w-[130px] min-w-[90px] h-full cursor-pointer
+                  ${isSmallFont(card.fighter2?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}
                   ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "border border-transparent hover:border-blue-300"}`} 
                   onClick={() => handlePredictionVote(card.id, 2)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter2?.name, 7))}
                 </button>
               </div>
-              <div className="flex lg:row-start-9 lg:row-end-12 lg:col-start-1 lg:col-end-6 mt-4 lg:mt-4.5">
+              <div className="flex lg:row-start-9 lg:row-end-12 lg:col-start-1 lg:col-end-6 mx-4 sm:mx-0 mt-4 lg:mt-4.5">
                 <div className="flex gap-x-2 items-center justify-between px-0 lg:px-10">
-                  <span className="bg-gray-100 rounded p-1">{card.organization?.name}</span>
-                  <span className="bg-gray-100 rounded p-1">{card.weight_class?.name}</span>
+                  <span className="text-black bg-gray-100 rounded p-1">{card.organization?.name}</span>
+                  <span className="text-black bg-gray-100 rounded p-1">{card.weight_class?.name}</span>
                 </div>
               </div>
-              <div className="lg:row-start-5 lg:row-end-10 lg:col-start-6 lg:col-end-12">
+              <div className="lg:row-start-5 lg:row-end-10 lg:col-start-6 lg:col-end-12 mx-3 sm:mx-0 mt-2 sm:mt-0">
                 <div className="flex text-xs justify-between text-gray-700">
                   <span>{leftPct}%</span>
                   <span>{rightPct}%</span>
@@ -456,7 +456,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
               <div className="flex lg:row-start-10 lg:row-end-12 lg:col-start-6 lg:col-end-12 pt-3 lg:pt-0">
                 <div className="flex gap-x-2 lg:items-center lg:justify-between cursor-pointer" onClick={() => handlePopularityVote(card.id)}>
                   <MdHowToVote size={24} />
-                  <span className="text-sm text-gray-600">{card.popularity_votes}</span>
+                  <span className="text-sm text-gray-600 font-bold">{card.popularity_votes}</span>
                   {popVoted && (
                     <div className="text-sm font-bold">
                       投票済み
@@ -471,7 +471,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
       { 10 < filteredCards.length && (
         <div className="text-center mt-8 mb-3">
           <Link href="/allrankings" className="text-gray-500 hover:text-blue-800">
-            10位以降のランキングを見る
+            11位以降のランキングを見る
           </Link>
         </div>
       )}

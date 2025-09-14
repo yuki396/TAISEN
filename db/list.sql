@@ -15,10 +15,10 @@ create table public.fight_cards (
   popularity_votes integer null default 0,       -- 人気投票数
   constraint fight_cards_pkey primary key (id),  -- 主キー制約
   constraint fight_cards_created_by_fkey foreign KEY (created_by) references auth.users (id), -- created_by → auth.users(id)外部参照制約
-  constraint fight_cards_fighter1_id_fkey foreign KEY (fighter1_id) references fighters (id) on delete CASCADE, -- fighter1_id → fighters(id)外部参照制約（選手削除時は同時に削除）
-  constraint fight_cards_organization_id_fkey foreign KEY (organization_id) references organizations (id) on delete CASCADE, -- organization_id → organizations(id)外部参照制約（団体削除時は同時に削除）
-  constraint fight_cards_fighter2_id_fkey foreign KEY (fighter2_id) references fighters (id) on delete CASCADE, -- fighter2_id → fighters(id)外部参照制約（選手削除時は同時に削除）
-  constraint fight_cards_weight_class_id_fkey foreign KEY (weight_class_id) references weight_classes (id) on delete CASCADE, -- weight_class_id → weight_classes(id)外部参照制約（階級削除時は同時に削除）
+  constraint fight_cards_fighter1_id_fkey foreign KEY (fighter1_id) references fighters (id) on update CASCADE on delete CASCADE, -- fighter1_id → fighters(id)外部参照制約（選手削除/更新時は同時に削除/更新）
+  constraint fight_cards_organization_id_fkey foreign KEY (organization_id) references organizations (id) on update CASCADE on delete CASCADE, -- organization_id → organizations(id)外部参照制約（団体削除/更新時は同時に削除/更新）
+  constraint fight_cards_fighter2_id_fkey foreign KEY (fighter2_id) references fighters (id) on update CASCADE on delete CASCADE, -- fighter2_id → fighters(id)外部参照制約（選手削除/更新時は同時に削除/更新）
+  constraint fight_cards_weight_class_id_fkey foreign KEY (weight_class_id) references weight_classes (id) on update CASCADE on delete CASCADE, -- weight_class_id → weight_classes(id)外部参照制約（階級削除/更新時は同時に削除/更新）
   constraint fight_cards_check check ((fighter1_id <> fighter2_id)) -- 同一選手同士の作成は禁止する制約
 ) TABLESPACE pg_default;
 
@@ -51,7 +51,7 @@ create table public.fighter_requests (
   constraint fighter_requests_pkey primary key (id), -- 主キー制約
   constraint fighter_requests_created_by_fkey foreign KEY (created_by) references auth.users (id) on delete CASCADE, -- created_by → auth.users(id)外部参照制約（選手削除時は同時に削除）
   constraint fighter_requests_processed_by_fkey foreign KEY (processed_by) references auth.users (id) on delete set null, -- processed_by → auth.users(id)外部参照制約（選手削除時はnullをセット）
-  constraint fighter_requests_target_fighter_id_fkey foreign KEY (target_fighter_id) references fighters (id) on delete set null -- target_fighter_id → fighters(id)外部参照制約（選手削除時はnullをセット）
+  constraint fighter_requests_target_fighter_id_fkey foreign KEY (target_fighter_id) references fighters (id) on update CASCADE on delete set null -- target_fighter_id → fighters(id)外部参照制約（選手削除時は同時にnullをセット/更新時は同時に更新）
 ) TABLESPACE pg_default;
 
 --------------------------------------------------
@@ -62,8 +62,8 @@ create table public.fighter_top4_counts (
   fighter_id integer not null,                    -- 選手ID（fighters.id）
   counts bigint not null default 0,               -- カウント（集計値）
   constraint fighter_top4_counts_pkey primary key (weight_class_id, fighter_id), -- 複合主キー制約（階級×選手）
-  constraint fk_ft4c_fighter foreign KEY (fighter_id) references fighters (id) on delete CASCADE, -- fighter_id → fighters(id)外部参照制約（選手削除時は同時に削除）
-  constraint fk_ft4c_weight_class foreign KEY (weight_class_id) references weight_classes (id) on delete CASCADE -- weight_class_id → weight_classes(id)外部参照制約（階級削除時は同時に削除）
+  constraint fk_ft4c_fighter foreign KEY (fighter_id) references fighters (id) on update CASCADE on delete CASCADE,, -- fighter_id → fighters(id)外部参照制約（選手削除/更新時は同時に削除/更新）
+  constraint fk_ft4c_weight_class foreign KEY (weight_class_id) references weight_classes (id) on update CASCADE on delete CASCADE -- weight_class_id → weight_classes(id)外部参照制約（階級削除/更新時は同時に削除/更新）
 ) TABLESPACE pg_default;
 
 --------------------------------------------------
@@ -172,9 +172,9 @@ create table public.user_top4 (
   position smallint not null default 1,            -- 順位（1〜4）
   constraint user_top4_pkey primary key (id),      -- 主キー制約
   constraint ux_user_top4_unique unique (user_id, weight_class_id, fighter_id), -- （user_id, weight_class_id, fighter_id）ユニーク制約
-  constraint user_top4_fighter_id_fkey foreign KEY (fighter_id) references fighters (id) on delete CASCADE, -- fighter_id → fighters(id)外部参照制約（選手削除時は同時に削除）
+  constraint user_top4_fighter_id_fkey foreign KEY (fighter_id) references fighters (id) on update CASCADE on delete CASCADE,, -- fighter_id → fighters(id)外部参照制約（選手削除/更新時は同時に削除/更新）
   constraint user_top4_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE, -- user_id → profiles(id)外部参照制約（プロフィール削除時は同時に削除）
-  constraint user_top4_weight_class_id_fkey foreign KEY (weight_class_id) references weight_classes (id) on delete CASCADE, -- weight_class_id → weight_classes(id)外部参照制約（階級削除時は同時に削除）
+  constraint user_top4_weight_class_id_fkey foreign KEY (weight_class_id) references weight_classes (id) on update CASCADE on delete CASCADE, -- weight_class_id → weight_classes(id)外部参照制約（階級削除/更新時は同時に削除/更新）
   constraint chk_user_top4_position check (
     (
       ("position" >= 1)
@@ -208,8 +208,8 @@ create table public.votes (
   created_at timestamp with time zone null default now(), -- 投票日時（デフォルトで現在時刻）
   constraint votes_pkey primary key (id),          -- 主キー制約
   constraint votes_user_id_fight_card_id_vote_type_key unique (user_id, fight_card_id, vote_type), -- （user_id, fight_card_id, vote_types）ユニーク制約
-  constraint votes_fight_card_id_fkey foreign KEY (fight_card_id) references fight_cards (id) on delete CASCADE, -- カード削除時は投票も削除
-  constraint votes_user_id_fkey foreign KEY (user_id) references auth.users (id), -- user_id → auth.users(id)外部参照制約（auth削除時は同時に削除）
+  constraint votes_fight_card_id_fkey foreign KEY (fight_card_id) references fight_cards (id) on update CASCADE on delete CASCADE, -- カード削除/更新時は投票も削除/更新
+  constraint votes_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE, -- user_id → auth.users(id)外部参照制約（auth削除時は同時に削除）
   constraint votes_vote_for_check check ((vote_for = any (array[1, 2]))), -- vote_forは1または2のみ許可
   constraint votes_vote_type_check check (
     (
