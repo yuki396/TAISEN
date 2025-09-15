@@ -913,7 +913,7 @@ export default function AccountPage() {
               </div>
               <p className="border-b border-gray-300"/>
               {/* Search area shown only in edit mode */}
-              {isTop4Editing && (
+              {isTop4Editing && !top4Saving && (
                 <div className="mt-3">
                   <input
                     value={searchInput}
