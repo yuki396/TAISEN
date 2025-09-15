@@ -1,9 +1,10 @@
 import { MdInfoOutline } from 'react-icons/md';
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Tooltip component that shows additional information when hovered, focused, or clicked
 const InfoTooltip = ({ id, content }: { id: string; content: React.ReactNode }) => {
-  const [show, setShow] = useState(false); // State to control tooltip visibility
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Close tooltip when the "Escape" key is pressed
@@ -14,19 +15,32 @@ const InfoTooltip = ({ id, content }: { id: string; content: React.ReactNode }) 
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Handle click outside to close it
+  useEffect(() => {
+    // For handling click outside
+    const handleClickOutside = (e: MouseEvent) => {
+      // Check if dropdown is open and,
+      // if the click is outside(the clicked element is not among the elements referenced by ref)
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        // close dropdown
+        setShow(false);
+      }
+    };
+    // Add event listener for clciking mouse
+    document.addEventListener('mousedown', handleClickOutside);
+    // Cleanup event listener on unmount
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+    
+
   return (
-    <div className="relative flex items-center">
+    <div ref={ref} className="relative flex items-center">
       {/* Button that triggers the tooltip (icon button) */}
       <button
-        onMouseEnter={() => setShow(true)} // Show tooltip on hover
-        onMouseLeave={() => setShow(false)} // Hide tooltip when mouse leaves
-        onFocus={() => setShow(true)}       // Show tooltip when focused (keyboard nav)
-        onBlur={() => setShow(false)}       // Hide tooltip when focus is lost
         onClick={() => setShow(s => !s)} // Toggle tooltip on click
-        className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className={`rounded hover:bg-gray-100 ${show ? 'ring-2 ring-blue-500' : ''} cursor-pointer`}
         type="button"
       >
-        {/* Info icon */}
         <MdInfoOutline size={20} className="text-gray-600 dark:text-gray-300" />
       </button>
 
