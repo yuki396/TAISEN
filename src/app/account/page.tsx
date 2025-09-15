@@ -783,7 +783,7 @@ export default function AccountPage() {
                                     className={`rounded-lg shadow border border-gray-200 px-3 py-2 h-[170px] cursor-pointer
                                                 shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                                                 hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]
-                                                ${selectedCardIds.includes(card.id) ? 'text-black bg-red-100 border-red-300' : ''}`}
+                                                ${selectedCardIds.includes(card.id) ? 'bg-red-50 border-2 border-red-300' : ''}`}
                                   >
                                     <div className="flex flex-col">
                                       <div className="flex items-center gap-x-3 h-[100px]">
@@ -828,7 +828,7 @@ export default function AccountPage() {
         {showTop4 && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { if (!isTop4Editing) setMyTop4Open(false) }} />
-            <div className="relative flex flex-col bg-white rounded-xl border border-gray-300 shadow-xl px-5 mx-1 sm:mx-10 max-h-[70vh] sm:max-h-[90vh] w-full">
+            <div className="relative flex flex-col bg-white rounded-xl border border-gray-300 shadow-xl px-5 mx-1 sm:mx-10 max-h-[80vh] sm:max-h-[90vh] w-full">
               <div className="flex justify-between sm:mx-4 mt-6 pb-4">
                 <h3 className="text-2xl  sm:text-3xl font-semibold">MyTop4</h3>
                 <div className="flex items-center gap-x-2 sm:gap-x-3">
@@ -975,7 +975,7 @@ export default function AccountPage() {
                   myTop4.map((t, idx) => (
                     <div key={idx} className="border-b border-gray-300 border-radius pb-6 mx-3">
                       <h2 className="text-2xl font-bold mt-1">{t.weightClass.name}</h2>
-                      <div className="grid grid-rows-4 lg:grid-rows-1 lg:grid-cols-4 sm:grid-rows-2 sm:grid-cols-2 gap-4 mt-3">
+                      <div className="grid grid-rows-4 grid-cols-1 lg:grid-rows-1 lg:grid-cols-4 sm:grid-rows-2 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
                         {t.fighters.map((f, slotIdx) => {
                           const isNothing = f.id === -1;
                           const slotKey = `${t.weightClass.id}_${slotIdx}`;
@@ -987,9 +987,9 @@ export default function AccountPage() {
                               onDragOver={handleDragOver}
                               onClick={() => !isTop4Editing && toggleTop4Select(t.weightClass.id, slotIdx)}
                               className={`relative border border-gray-300/50 rounded-lg shadow-[0_5px_25px_rgba(255,0,0,0.3)]
-                                          hover:shadow-[0_8px_30px_rgba(255,0,0,0.5)] hover:border-gray-300 transition-shadow 
-                                          duration-300 h-[110px] ${isTop4Editing ? 'hover:bg-red-100' : ''}
-                                          ${selectedTop4Slots.includes(slotKey) ? 'bg-red-100 border-red-300' : ''}`}
+                                          hover:shadow-[0_8px_30px_rgba(255,0,0,0.5)] transition-shadow 
+                                          duration-300 h-[90px] sm:h-[110px] ${isTop4Editing ? 'hover:bg-red-100' : ''}
+                                          ${selectedTop4Slots.includes(slotKey) ? 'bg-red-50 border-2 border-red-300' : ''}`}
                             >
                               {/* Small ember */}
                               <span className="ember" style={{ left: "12%", top: "-8%", animationDelay: "0s" }} />

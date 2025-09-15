@@ -230,8 +230,8 @@ export default function Top4FightersPage() {
                       <div
                         key={i}
                         className={`relative border border-gray-300/50 rounded-lg shadow-[0_5px_25px_rgba(255,0,0,0.3)]
-                                    hover:shadow-[0_8px_30px_rgba(255,0,0,0.5)] hover:border-gray-300 transition-shadow 
-                                    duration-300 h-[110px]`}
+                                    hover:shadow-[0_8px_30px_rgba(255,0,0,0.5)]
+                                    duration-300 h-[90px] sm:h-[110px]`}
                       >
                         {/* Small ember */}
                         <span className="ember" style={{ left: "12%", top: "-8%", animationDelay: "0s" }} />
