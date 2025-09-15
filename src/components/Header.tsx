@@ -86,10 +86,10 @@ export default function Header() {
 
   return (
     <header className="bg-gray-800">
-      <div className="container grid grid-cols-2 mx-auto px-3">
+      <div className="container grid grid-cols-2 mx-auto px-3 mt-2">
         {/* Logo and Title */}
         <h1 className="row-start-1 col-start-1 flex items-center text-2xl font-bold my-1 sm:my-3">
-          <Link href="/" className="flex items-center text-xl sm:text-2xl text-white font-bold">
+          <Link href="/" className="flex items-center text-2xl text-white font-bold italic">
             <Image
               src="/logo.png"
               alt="TAISEN Logo"
@@ -180,9 +180,9 @@ export default function Header() {
         </div>
 
         {/* Main Navigation */}
-        <div className="row-start-2 col-span-2 border-t-[1.8px] border-[rgba(0,0,0,0.3)]">
+        <div className="row-start-2 col-span-2 ">
           <nav aria-label="Main navigation">
-            <ul className="flex gap-x-6 py-4">
+            <ul className="flex gap-x-6 py-3">
               <li>
                 <Link href="/" className="text-sm sm:text-base text-white font-bold hover:text-gray-300">
                   対戦カードランキング

@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   return (
     <div className="container flex justify-center py-8">
-      <div className="shadow-md rounded border border-gray-100 p-7 mx-4 my-2 w-96">
+      <div className="shadow-md rounded border border-gray-100 p-7 mx-8 my-2 w-96">
         <h2 className="text-center text-2xl font-bold">ログイン</h2>
         {error && <p className="text-red-600 rounded bg-red-50 border border-red-300 p-2 mt-5">{error}</p>}
         <form onSubmit={handleEmailLogin}>
