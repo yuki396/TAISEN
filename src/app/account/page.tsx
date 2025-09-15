@@ -114,22 +114,22 @@ export default function AccountPage() {
     (async () => {
       // Ensure user ID are loaded
       if (!userId) return;
-      setTop4Loading(true);
       
       try {
+        setTop4Loading(true);
         // Fetch weight classes by gender
         const { wData, wError } = await fetchWeightClassesByGender(gender);
         if (wError) {
           console.error('Failed to fetch top4 view data', JSON.stringify(wError));
           return;
-        } else {
-          const wArray: WeightClass[] = (wData || []).map((w) => ({
-            id: w.id,
-            name: w.name,
-            gender: w.gender
-          }));
-          setWeightClasses(wArray);
-        }
+        } 
+        const wArray: WeightClass[] = (wData || []).map((w) => ({
+          id: w.id,
+          name: w.name,
+          gender: w.gender
+        }));
+        setWeightClasses(wArray);
+        
         // Fetch fighters and set initial fighter list
         const { fData, fError } = await fetchFightersByGender(gender);
         if (!fError && fData){
@@ -151,7 +151,7 @@ export default function AccountPage() {
           }));
 
         // Change to UI format
-        const wArray: Top4UI[] = (weightClasses || []).map((w) => {
+        const wArrayUI: Top4UI[] = (wArray || []).map((w) => {
           const fightersForClass = t4Array.filter(t => t.weightClass?.id === w.id);
 
           const fighters: Top4UI["fighters"] = [
@@ -171,7 +171,7 @@ export default function AccountPage() {
           };
         });
 
-          setMyTop4(wArray);
+          setMyTop4(wArrayUI);
         }
       } catch (e: unknown) {
         console.error('Unexpected error during loading my top4 data : ', e);
