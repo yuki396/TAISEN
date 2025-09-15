@@ -37,6 +37,11 @@
     background-color: #374151; /* dark時用の色 (gray-700あたり) */
   }
 
+  .bg-red-50,
+  .bg-blue-50 {
+    background-color: rgb(0, 0, 0);
+  }
+
 }
 
 body {

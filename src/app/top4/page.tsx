@@ -203,11 +203,11 @@ export default function Top4FightersPage() {
         )))}
       </div>
 
-      {/* My Top4 */}
+      {/* MyTop4 */}
       {isMyTop4Open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setMyTop4Open(false) }} />
-          <div className="relative flex flex-col bg-white rounded-xl shadow-xl border border-gray-300 px-5 mx-10 max-h-[90vh] w-full">
+          <div className="relative flex flex-col bg-white rounded-xl shadow-xl border border-gray-300 px-5 mx-10 max-h-[70vh] sm:max-h-[90vh] w-full">
             <div className="flex justify-between border-b border-gray-300 mx-4 mt-6 pb-4">
               <h3 className="text-2xl sm:text-3xl font-semibold">MyTop4</h3>
               <div className="flex items-center gap-3">

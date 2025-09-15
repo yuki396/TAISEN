@@ -363,7 +363,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 <button 
                   className={`flex-1 font-semibold whitespace-pre-line break-keep rounded py-1 min-w-[90px] h-full cursor-pointer
                   ${isSmallFont(card.fighter1?.name) ? "sm:text-xl text-lg" : "sm:text-2xl text-xl"}
-                  ${votedPrediction === 1 ? "border-2 border-red-300 bg-red-50" : "border border-transparent hover:border-red-300"}`} 
+                  ${votedPrediction === 1 ? "bg-red-50 border-2 border-red-300" : "hover:border-red-300 border border-transparent"}`} 
                   onClick={() => handlePredictionVote(card.id, 1)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
@@ -372,7 +372,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 <button 
                   className={`flex-1 font-semibold whitespace-pre-line break-keep rounded py-1 min-w-[90px] h-full cursor-pointer
                   ${isSmallFont(card.fighter2?.name) ? "sm:text-xl text-lg" : "sm:text-2xl text-xl"}
-                  ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "border border-transparent hover:border-blue-300"}`} 
+                  ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "hover:border-blue-300 border border-transparent"}`} 
                   onClick={() => handlePredictionVote(card.id, 2)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
@@ -425,7 +425,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 <button 
                   className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded sm:min-w-[130px] min-w-[90px] h-full cursor-pointer
                   ${isSmallFont(card.fighter1?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}
-                  ${votedPrediction === 1 ? "border-2 border-red-300 bg-red-50" : "border border-transparent hover:border-red-300"}`} 
+                  ${votedPrediction === 1 ? "bg-red-50 border-2 border-red-300 " : "hover:border-red-300 border border-transparent"}`} 
                   onClick={() => handlePredictionVote(card.id, 1)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter1?.name, 7))}
@@ -434,7 +434,7 @@ const FightCardList = ({ initialFightCards, initialVotedCards, gender, weight, o
                 <button
                   className={`flex-1 font-semibold whitespace-pre-line break-keep overflow-hidden rounded sm:min-w-[130px] min-w-[90px] h-full cursor-pointer
                   ${isSmallFont(card.fighter2?.name) ? "sm:text-lg text-base" : "sm:text-xl text-lg"}
-                  ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "border border-transparent hover:border-blue-300"}`} 
+                  ${votedPrediction === 2 ? "bg-blue-50 border-2 border-blue-300" : "hover:border-blue-300 border border-transparent"}`} 
                   onClick={() => handlePredictionVote(card.id, 2)}
                 >
                   {noBreakDots(insertLineBreak(card.fighter2?.name, 7))}
