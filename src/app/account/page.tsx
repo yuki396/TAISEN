@@ -7,7 +7,7 @@ import {
   deletePopuralityVotes, 
   fetchWeightClassesByGender, 
   fetchMyTop4, 
-  fetchFightersByGender,
+  fetchFighters,
   uploadImage,
   removeImage,
   fetchPopularityVotes,
@@ -87,6 +87,13 @@ export default function AccountPage() {
                 setoldImagePath(pathMatch[1]);
               }
             };
+
+            // Fetch fighters and set initial fighter list
+            const { fData, fError } = await fetchFighters();
+            if (!fError && fData){
+              // Set fighters
+              setFighters(fData);
+            }
           };
         };
       } catch (e: unknown) {
@@ -129,14 +136,6 @@ export default function AccountPage() {
           gender: w.gender
         }));
         setWeightClasses(wArray);
-        
-        // Fetch fighters and set initial fighter list
-        const { fData, fError } = await fetchFightersByGender(gender);
-        if (!fError && fData){
-          // Set fighters, organizations
-          const fightersList = (fData || []).map(({ id, name, gender}) => ({ id, name, gender }));
-          setFighters(fightersList);
-        }
 
         // Fetch my Top4 data
         const { t4Data, t4Error } = await fetchMyTop4(userId, gender);
@@ -362,8 +361,9 @@ export default function AccountPage() {
       setSearchOpen(false);
       return;
     }
-    const f = fighters.filter((a) => a.name.toLowerCase().includes(value.toLowerCase()));
-    setFiltered(f.slice(0, 20));
+    const fightersByGender = fighters.filter((a) => gender===a.gender)
+    const filteredfighters = fightersByGender.filter((a) => a.name.toLowerCase().includes(value.toLowerCase()));
+    setFiltered(filteredfighters.slice(0, 20));
     setSearchOpen(true);
   };
 
