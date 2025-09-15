@@ -824,11 +824,11 @@ export default function AccountPage() {
           </div>
         )}
 
-        {/* My Top 4 */}
+        {/* MyTop4 */}
         {showTop4 && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { if (!isTop4Editing) setMyTop4Open(false) }} />
-            <div className="relative flex flex-col bg-white rounded-xl border border-gray-300 shadow-xl px-5 mx-1 sm:mx-10 max-h-[90vh] w-full">
+            <div className="relative flex flex-col bg-white rounded-xl border border-gray-300 shadow-xl px-5 mx-1 sm:mx-10 max-h-[70vh] sm:max-h-[90vh] w-full">
               <div className="flex justify-between sm:mx-4 mt-6 pb-4">
                 <h3 className="text-2xl  sm:text-3xl font-semibold">MyTop4</h3>
                 <div className="flex items-center gap-x-2 sm:gap-x-3">
