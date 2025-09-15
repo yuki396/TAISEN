@@ -18,9 +18,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <link rel="icon" href="/logo.png" />
       </head>
-      <body className={`${inter.className} flex flex-col text-black bg-white min-h-screen`}>
+      <body className={`${inter.className} flex flex-col min-h-screen`}>
         <Header />
-        <main className="container flex-1 mx-auto px-4 py-8">
+        <main className="container flex-1 mx-auto sm:px-4 sm:py-8 py-2">
           <Toaster position="top-center" reverseOrder={false} />
           {children}
         </main>

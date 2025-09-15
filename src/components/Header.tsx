@@ -85,11 +85,11 @@ export default function Header() {
   };
 
   return (
-    <header className="text-white bg-gray-800">
+    <header className="bg-gray-800">
       <div className="container grid grid-cols-2 mx-auto px-3">
         {/* Logo and Title */}
-        <h1 className="row-start-1 col-start-1 flex items-center text-2xl font-bold my-3">
-          <Link href="/" className="flex items-center text-2xl font-bold">
+        <h1 className="row-start-1 col-start-1 flex items-center text-2xl font-bold my-1 sm:my-3">
+          <Link href="/" className="flex items-center text-xl sm:text-2xl text-white font-bold">
             <Image
               src="/logo.png"
               alt="TAISEN Logo"
@@ -107,7 +107,7 @@ export default function Header() {
           {userId ? (
             <button
               onClick={() => setDropdownOpen(open => !open)}
-              className="cursor-pointer pt-1 focus:outline-none cursor-pointer"
+              className="pt-1 sm:mb-1 focus:outline-none cursor-pointer"
             >
               {profile?.image_url ? (
                 <div className="rounded-full overflow-hidden w-10 h-10">
@@ -126,36 +126,36 @@ export default function Header() {
             </button>
           ) : (
             <div className="flex items-center pt-1">
-              <Link href="/login" className="font-bold hover:text-gray-300 mr-4">
+              <Link href="/login" className="text-sm sm:text-base text-white font-bold hover:text-gray-300 sm:mr-4">
                 ログイン
               </Link>
               <Link
                 href="/signup"
-                className="font-bold rounded hover:bg-white hover:text-gray-800 transition duration-200 py-1 px-4"
+                className="text-sm sm:text-base text-white font-bold rounded hover:bg-white hover:text-gray-800 transition duration-200 py-1 px-4"
               >
                 登録
               </Link>
             </div>
           )}
           {dropdownOpen && (
-            <div className="absolute z-20 right-0 text-black bg-white rounded shadow-lg mt-2 w-36">
+            <div className="absolute z-20 right-0 bg-white rounded shadow-lg mt-2 w-36">
               <Link
                 href="/account"
-                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                className="block text-sm sm:text-base text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
                 onClick={() => setDropdownOpen(false)}
               >
                 マイページ
               </Link>
               <Link
                 href="/create"
-                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                className="block text-sm sm:text-base text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
                 onClick={() => setDropdownOpen(false)}
               >
                 対戦カード作成
               </Link>
               <Link
                 href="/request"
-                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                className="block text-sm sm:text-base text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
                 onClick={() => setDropdownOpen(false)}
               >
                 選手申請
@@ -163,7 +163,7 @@ export default function Header() {
               {!loading && isAdmin && (
                 <Link 
                   href="/api/admin/request-msg" 
-                  className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
+                  className="block text-sm sm:text-base text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full"
                   onClick={() => setDropdownOpen(false)}
                 >
                   申請一覧
@@ -171,7 +171,7 @@ export default function Header() {
               )}
               <button
                 onClick={handleLogout}
-                className="block text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full cursor-pointer"
+                className="block text-sm sm:text-base text-left font-bold rounded hover:bg-gray-100 px-4 py-2 w-full cursor-pointer"
               >
                 ログアウト
               </button>
@@ -184,12 +184,12 @@ export default function Header() {
           <nav aria-label="Main navigation">
             <ul className="flex gap-x-6 py-4">
               <li>
-                <Link href="/" className="font-bold hover:text-gray-300">
+                <Link href="/" className="text-sm sm:text-base text-white font-bold hover:text-gray-300">
                   対戦カードランキング
                 </Link>
               </li>
               <li>
-                <Link href="/top4" className="font-bold hover:text-gray-300">
+                <Link href="/top4" className="text-sm sm:text-base text-white font-bold hover:text-gray-300">
                   トップフォーファイター
                 </Link>
               </li>

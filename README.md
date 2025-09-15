@@ -32,9 +32,9 @@ TAISEN/
 ├── db/                # db関連ファイル
 ├── public/                # 静的ファイル
 ├── src/
-│   ├── app/
+│   ├── app/                   # 各ページ（ホーム：対戦カードランキングページ）
 │   │     ├── account/         # マイページ
-│   │     ├── allrankings/     # 11位以降のランキング一覧ページ
+│   │     ├── allrankings/     # 11位以降ランキング一覧ページ
 │   │     ├── api/admin/
 │   │     │       ├── fighter-requests/ # API Route
 │   │     │       ├── request-msg/ # 申請管理ページ

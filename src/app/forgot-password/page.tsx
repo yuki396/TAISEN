@@ -54,27 +54,28 @@ export default function ForgotPasswordPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center mt-10">
+      <div className="container flex justify-center mx-auto mt-30">
         <p className="text-gray-500">送信中...</p>
       </div>
     );
   } 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white rounded shadow-md p-8 w-full max-w-md">
+    <div className="container flex justify-center px-4 mx-auto mt-10">
+      <div className="rounded shadow-md border border-gray-100 p-6 sm:p-8 mx-2 w-full max-w-md">
         <div className="text-sm">
           <Link href="/login" className="text-blue-600 hover:underline">
             ← ログインに戻る
           </Link>
         </div>
-        <h2 className="text-center text-2xl font-bold mt-7">パスワードをお忘れですか？</h2>
-        <p className="text-center text-sm text-gray-600 mt-4">
-          登録したメールアドレスを入力してください。<br />
+        <h2 className="sm:text-center text-2xl font-bold mt-7">パスワードをお忘れですか？</h2>
+        <p className="sm:text-center text-sm text-gray-600 mt-4">
+          登録したメールアドレスを入力してください。
+          <span className="hidden sm:inline"><br/></span>
           パスワード再設定メールを送信します。
         </p>
         {error && <p className="text-red-600 bg-red-50 border border-red-300 rounded p-2 mt-2">{error}</p>}
-        <form onSubmit={handleResetPassword} className="mt-5">
+        <form onSubmit={handleResetPassword} className="mt-5 sm:mx-10">
           <label htmlFor="email" className="text-sm font-medium mt-10">
             メールアドレス
           </label>
@@ -87,15 +88,17 @@ export default function ForgotPasswordPage() {
             required
             className="border border-gray-300 rounded px-3 py-2 mt-2 w-full"
           />
-          <button
-            type="submit"
-            className="text-white rounded bg-blue-600 hover:bg-blue-700 transition duration-200 py-2 mt-5 w-full cursor-pointer"
-          >
-            送信する
-          </button>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="text-white rounded bg-blue-600 hover:bg-blue-700 transition duration-200 py-2 mt-5 w-full cursor-pointer"
+            >
+              送信する
+            </button>
+          </div>
         </form>
         <div className="text-center text-sm mt-4">
-          アカウントをお持ちでない場合は{' '}
+          アカウントをお持ちでない場合{' '}
           <Link href="/signup" className="text-blue-600 hover:underline">
             新規登録
           </Link>

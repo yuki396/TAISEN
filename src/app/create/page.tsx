@@ -272,12 +272,12 @@ export default function CreateCardPage() {
 
   return (
     <div className="container flex justify-center px-4 py-8">
-      <div className="flex flex-col p-8 rounded border border-gray-300 gap-y-4 w-120 lg:w-160">
-        <h1 className="text-3xl font-bold">対戦カード作成</h1>
-        <p className="text-gray-600">
-          あなたが見たい対戦カードを提案しましょう。作成したカードはランキングに表示されます。
+      <div className="flex flex-col p-8 rounded border border-gray-300 gap-y-3 w-full max-w-xl">
+        <h1 className="text-2xl sm:text-3xl font-bold">対戦カード作成</h1>
+        <p className="text-sm sm:text-base text-gray-600">
+          あなたが見たい対戦カードを提案しましょう。作成したカードはランキングに表示され、ユーザーが投票/勝敗予想をできるようになります。
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-y-2">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-y-1 sm:gap-y-2">
           {/* fighter1 */}
           <label className="text-gray-700 font-medium mt-2">選手1</label>
           <input
@@ -350,7 +350,7 @@ export default function CreateCardPage() {
             value={weightClassId}
             onChange={(e) => setWeightClass(Number(e.target.value))}
             className={`block border border-gray-300 rounded shadow-sm px-3 py-2 w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-            ${weightClassId === 0 ? 'text-gray-400' : 'text-black'}`}
+            ${weightClassId === 0 ? 'text-gray-400' : ''}`}
             disabled={!selected1 || !selected2 || (selected1 && selected2 && selected1.gender !== selected2.gender)}
           >
             <option value={0} disabled>
@@ -369,7 +369,7 @@ export default function CreateCardPage() {
             value={organizationId}
             onChange={(e) => setOrganization(Number(e.target.value))}
             className={`block border border-gray-300 rounded shadow-sm px-3 py-2 w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-            ${organizationId === 0 ? 'text-gray-400' : 'text-black'}`}
+            ${organizationId === 0 ? 'text-gray-400' : ''}`}
             disabled={!selected1 || !selected2 || (selected1 && selected2 && selected1.gender !== selected2.gender)}
           >
             <option value={0} disabled>
@@ -388,28 +388,28 @@ export default function CreateCardPage() {
           )}
           {/* preview */}
           {selected1 && selected2 && organizationId != 0 && weightClassId != 0 &&(
-            <div className="flex items-center justify-center mt-3">
+            <div className="flex items-center justify-center mt-7">
               <div
-                className="bg-white rounded px-5 py-4 m-6 max-w-xl
+                className="flex flex-col gap-y-3 rounded
                           shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
                           hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]"
               >
-                <div className="flex items-center justify-center text-center gap-x-3 py-3 h-[85px]">
+                <div className="flex items-center justify-center text-center gap-x-1 h-[100px] pt-2">
                   <div 
-                    className={`flex-1 font-semibold whitespace-pre-line break-keep rounded min-w-40
-                              ${isSmallFont(selected1.name) ? "text-lg" : "text-xl"}`}
+                    className={`flex-1 font-semibold whitespace-pre-line break-keep rounded pt-2 px-3 min-w-[130px]
+                              ${isSmallFont(selected1.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
                   >
                     {noBreakDots(insertLineBreak(selected1.name, 7))}
                   </div>
-                  <span className="text-2xl font-semibold">vs</span>
+                  <span className="text-xl sm:text-2xl font-semibold">vs</span>
                   <div 
-                    className={`flex-1 font-semibold whitespace-pre-line break-keep rounded min-w-40
-                              ${isSmallFont(selected2.name) ? "text-lg" : "text-xl"}`}
+                    className={`flex-1 font-semibold whitespace-pre-line break-keep rounded pt-2 px-3 min-w-[130px]
+                              ${isSmallFont(selected2.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
                   >
                     {noBreakDots(insertLineBreak(selected2.name, 7))}
                   </div>
                 </div> 
-                <div className="flex gap-x-2 mt-4">
+                <div className="flex gap-x-2 ml-3 mb-1">
                   <span className="text-black bg-gray-100 rounded px-1 py-1">
                     {organizations.find((org) => org.id === organizationId)?.name}
                   </span>
@@ -423,7 +423,7 @@ export default function CreateCardPage() {
           <div className="flex items-center justify-center">
             <button
               type="submit"
-              className="text-lg text-white font-bold rounded-lg shadow bg-red-600 hover:bg-red-700 transition duration-200 mt-5 px-6 py-2 cursor-pointer"
+              className="text-base sm:text-lg text-white font-bold rounded-lg shadow bg-red-600 hover:bg-red-700 transition duration-200 mt-5 px-6 py-2 cursor-pointer"
             >
               対戦カードの作成
             </button>

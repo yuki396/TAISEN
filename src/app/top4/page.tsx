@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import GenderTab from '@/components/GenderTab';
+import InfoTooltip from '@/components/InfoTooltip';
 import {  WeightClass, Top4, Top4UI } from '@/types/types'
 import { getCurrentUser, fetchMyTop4, fetchWeightClassesByGender, fetchTop4Counts } from '@/utils/supabaseBrowserUtils';
 import { insertLineBreak, isSmallFont, noBreakDots } from '@/utils/textUtils'; 
@@ -141,16 +142,28 @@ export default function Top4FightersPage() {
   }, [userId, gender, weightClasses]);
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="flex justify-between">
-        <GenderTab value={gender} onChange={setGender} />
+    <div className="container mx-auto px-4">
+      <div className="flex justify-between gap-x-3 mt-3 sm:mt-0">
+        <div className="flex items-center gap-x-3">
+          <GenderTab value={gender} onChange={setGender} />
+          <InfoTooltip
+            id="top4-page-help"
+            content={
+            <div className="whitespace-pre-line">
+              ＊全ユーザーのMyTop4を集計し、上位4<br />　選手を表示しています<br />
+              ＊MyTop4はマイページから変更できます<br />
+            </div>
+            }
+          />
+        </div>
         {userId &&
           <button
             type="button"
             onClick={() => setMyTop4Open(true)}
-            className={`text-white text-lg ${gender==="male" ? "bg-black hover:opacity-60" : "bg-red-600 hover:bg-red-700"} rounded shadow-md px-3 py-1 mb-2 cursor-pointer`}
+            className={`text-base sm:text-lg text-white ${gender==="male" ? "bg-black hover:opacity-60" : "bg-red-600 hover:bg-red-700"} 
+                        rounded shadow-md px-3 py-1 mb-2 cursor-pointer`}
           >
-            My Top 4
+            MyTop4
           </button>
         }
       </div>
@@ -170,7 +183,7 @@ export default function Top4FightersPage() {
                     key={i}
                     className="relative border border-gray-300/50 rounded-lg shadow-[0_5px_25px_rgba(255,0,0,0.3)] 
                               hover:shadow-[0_8px_30px_rgba(255,0,0,0.5)] hover:border-gray-350 transition-shadow 
-                              duration-300 h-[110px]"
+                              duration-300 h-[95px] sm:h-[110px]"
                   >
                     {/* Small ember */}
                     <span className="ember" style={{ left: "12%", top: "-8%", animationDelay: "0s" }} />
@@ -178,7 +191,7 @@ export default function Top4FightersPage() {
                     <span className="ember" style={{ left: "85%", top: "-6%", animationDelay: "0.9s" }} />
                     <p 
                       className={`flex items-center justify-center text-center flex-1 font-semibold whitespace-pre-line break-keep min-h-[62px]
-                                rounded px-2 py-1 h-full min-w-[100px] cursor-pointer ${isSmallFont(f.name) ? "text-xl" : "text-2xl"}`}
+                                rounded px-2 py-1 h-full min-w-[100px] cursor-pointer ${isSmallFont(f.name) ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"}`}
                     >
                       {noBreakDots(insertLineBreak(f.name, 9))}
                     </p>
@@ -194,15 +207,15 @@ export default function Top4FightersPage() {
       {isMyTop4Open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { setMyTop4Open(false) }} />
-          <div className="relative flex flex-col bg-white rounded-xl shadow-xl px-5 max-w-5xl max-h-lg mx-10 max-h-[90vh] w-full">
+          <div className="relative flex flex-col bg-white rounded-xl shadow-xl border border-gray-300 px-5 mx-10 max-h-[90vh] w-full">
             <div className="flex justify-between border-b border-gray-300 mx-4 mt-6 pb-4">
-              <h3 className="text-3xl font-semibold">MyTop4</h3>
+              <h3 className="text-2xl sm:text-3xl font-semibold">MyTop4</h3>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setMyTop4Open(false)}
                   className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400
-                            transition duration-200 py-2 px-7 cursor-pointer"
+                            transition duration-200 px-4 sm:px-7 py-1 sm:py-2 cursor-pointer"
                 >
                   閉じる
                 </button>
@@ -226,7 +239,7 @@ export default function Top4FightersPage() {
                         <span className="ember" style={{ left: "85%", top: "-6%", animationDelay: "0.9s" }} />
                         <p 
                           className={`flex justify-center items-center text-center font-semibold whitespace-pre-line break-keep overflow-hidden
-                                      rounded px-2 py-1 ${isSmallFont(f.name) ? "text-xl" : "text-2xl"} h-full cursor-pointer`}
+                                      rounded px-2 py-1 ${isSmallFont(f.name) ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"} h-full cursor-pointer`}
                         >
                           {noBreakDots(insertLineBreak(f.name, 9))}
                         </p>

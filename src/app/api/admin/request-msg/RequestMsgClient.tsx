@@ -118,7 +118,7 @@ const paginatedRequests = sortedRequests.slice(
 );
 
 return (
-    <div className="p-8">
+    <div className="container mx-auto px-4">
       <div className=" flex items-start justify-between mb-4">
         <Link href="/" className="text-gray-600 hover:underline">← トップに戻る</Link>
       </div>

@@ -3,10 +3,10 @@ import React from 'react';
 import { GiBoxingGlove } from 'react-icons/gi';
 
 const GenderTab = ({ value, onChange }: { value: 'male' | 'female'; onChange: (newGender: 'male' | 'female') => void; }) => {
-  const tabs: { key: 'male' | 'female'; color: string }[] = [ { key: 'male', color: '#000000' }, { key: 'female', color: '#e3342f' }];
+  const tabs: { key: 'male' | 'female'; color: string }[] = [ { key: 'male', color: '' }, { key: 'female', color: '#e3342f' }];
 
   return (
-    <div className="flex w-80">
+    <div className="flex w-50 sm:w-80">
       {tabs.map((tab) => (
         <button
           key={tab.key}

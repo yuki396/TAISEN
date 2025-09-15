@@ -58,26 +58,26 @@ export default function AuthCallbackClient() {
   }, [params, router]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <main className="container flex justify-center px-4 py-8">
       {status === 'loading' && (
         <p className="tex-xl text-center p-4">{message}</p>
       )}
       {status === 'error' && (
-        <div className="bg-white rounded shadow-md p-8">
-          <p className="text-center text-4xl font-bold mt-3">認証に失敗しました</p>
-          <p className="text-center text-xl text-gray-600 mt-7">リンクの有効期限が切れているか、古いリンクの可能性があります。</p>
-          <p className="text-center text-xl text-gray-600">もう一度メールからアクセスするか、再度新規アカウント登録をお試しください。</p>
+        <div className="rounded shadow-md p-8 mx-3">
+          <p className="text-center text-2xl sm:text-3xl font-bold mt-3">認証に失敗しました</p>
+          <p className="sm:text-center text-base sm:text-xl text-gray-600 mt-5">リンクの有効期限が切れているか、古いリンクの可能性があります。</p>
+          <p className="sm:text-center text-base sm:text-xl text-gray-600 mt-2">もう一度メールからアクセスするか、再度新規アカウント登録をお試しください。</p>
           <div className="text-center mt-6">
-            <Link href="/signup" className="text-blue-600 hover:underline">
+            <Link href="/signup" className="text-sm text-blue-600 hover:underline">
               ← 登録ページに戻る
             </Link>
           </div>
         </div>
       )}
       {status === 'success' && (
-        <div className="bg-white p-8 rounded shadow-md">
-          <p className="text-4xl font-bold text-center mt-3">メールアドレスの認証が完了しました</p>
-          <p className="text-gray-600 text-xl text-center mt-7">数秒後に自動的にアカウント画面へ移動します。<br/>サービスをお楽しみください。</p>
+        <div className="p-8 rounded shadow-md mx-3">
+          <p className="text-2xl sm:text-3xl font-bold text-center mt-3">メールアドレスの認証が完了しました</p>
+          <p className="text-gray-600 text-base sm:text-xl sm:text-center mt-7">数秒後に自動的にアカウント画面へ移動します。<br/>サービスをお楽しみください。</p>
           <div className="text-center mt-6">
             <Link href="/" className="text-blue-600 hover:underline">
               ← トップページに戻る

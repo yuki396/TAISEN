@@ -25,7 +25,7 @@ export default async function Home() {
     }));
   } else {
     return (
-      <div className="flex items-center justify-center">
+      <div className="container flex justify-center mx-auto mt-10">
         <div className="text-gray-500">
           データ取得に失敗しました
         </div>
@@ -47,7 +47,7 @@ export default async function Home() {
       }));
     } else {
       return (
-      <div className="flex items-center justify-center">
+      <div className="container flex justify-center mx-auto mt-10">
         <div className="text-gray-500">
           データ取得に失敗しました
         </div>
@@ -57,7 +57,7 @@ export default async function Home() {
   }
   
   return (
-    <div className="min-h-screen px-4">
+    <div className="container mx-auto px-4">
       <HomeClient initialFightCards={cards} initialVotedCards={votes}/>
     </div>
   );

@@ -24,6 +24,7 @@ import { isSmallFont, insertLineBreak, noBreakDots } from '@/utils/textUtils';
 
 export default function AccountPage() {
   const [loading, setLoading] = useState(true);
+  const [votedCardsloading, setvotedCardsloading] = useState(true);
   const [top4loading, setTop4Loading] = useState(true);
   const [weightClassesLoaded, setWeightClassesLoaded] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -123,6 +124,17 @@ export default function AccountPage() {
       setWeightClassesLoaded(true);
     })();
   }, [gender]);
+
+  // For laoding voted cards
+  useEffect(() => {
+    (async () => {
+      setvotedCardsloading(true);
+      if (showVoted) {
+        await fetchVotedCards();
+      }
+      setvotedCardsloading(false);
+    })();
+  }, [gender, showVoted]);
 
   // For loading My Top 4
   useEffect(() => {
@@ -288,6 +300,7 @@ export default function AccountPage() {
           console.error('Failed to get voted cards : ', JSON.stringify(cardsError));
           return;
         }
+        
         const votedCards: FightCardUI[] = (cardsData || []).map((v) => ({
           id: v.id,
           fighter1: Array.isArray(v.fighter1) ? v.fighter1[0] ?? null : (v.fighter1 ?? null),
@@ -298,7 +311,13 @@ export default function AccountPage() {
           fighter2_votes: v.fighter2_votes ?? 0,
           popularity_votes: v.popularity_votes ?? 0,
         }));
-        setVotedCards(votedCards);
+  
+        // Filter cards by gender
+        const filteredCards = (votedCards || []).filter(card => {
+          return card.fighter1?.gender === gender && card.fighter2?.gender === gender;
+        });
+
+        setVotedCards(filteredCards);
       }
     } catch (e: unknown) {
       console.error('Unexpected error during fetching voted cards : ', e);
@@ -553,29 +572,30 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center mt-10">
+      <div className="container flex justify-center mx-auto mt-30">
         <p className="text-gray-500">読み込み中...</p>
       </div>
     );
   } 
 
   return (
-    <main className="min-h-screen px-4 py-8">
+    <main className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
         {!editing && profile && (
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+          <div className="rounded-lg shadow-lg border border-gray-200 p-8">
             <div className="text-center mt-8">
-              <div className="relative flex items-center justify-center rounded-full overflow-hidden border-4 border-gray-200 mx-auto w-32 h-32 ">
+              <div className="relative flex items-center justify-center rounded-full overflow-hidden 
+                              border-4 border-gray-200 mx-auto w-28 sm:w-32 h-28 sm:h-32 ">
                 {profile.image_url ? (
                   <Image src={profile.image_url} alt="Avatar" fill className="object-cover" />
                 ) : (
-                  <MdPerson size={100} color="#ccc" />
+                  <MdPerson className="w-12 h-12 sm:w-24 sm:h-24" color="#ccc" />
                 )}
               </div>
-              <h2 className="text-2xl font-semibold text-gray-800 mt-6 mx-20">{profile.username}</h2>
+              <h2 className="flex justify-center text-xl sm:text-2xl font-semibold text-gray-800 mt-6 mx-20">{profile.username}</h2>
               <p className="text-gray-500 mt-2">{profile.email}</p>
             </div>
-            <div className="grid grid-cols-2 grid-rows-2 gap-3 mt-4">
+            <div className="grid sm:grid-cols-2 sm:grid-rows-2 gap-3 mt-4">
               <button
                 className="flex items-center justify-center gap-x-2 text-white font-semibold bg-red-600 hover:bg-red-700 
                           transition duration-200 rounded-lg py-3 px-8 cursor-pointer"
@@ -586,7 +606,6 @@ export default function AccountPage() {
               </button>
               <button
                 onClick={() => {
-                  fetchVotedCards();
                   setShowVoted(!showVoted);
                 }}
                 className="flex items-center justify-center gap-x-2 text-white font-semibold bg-black hover:bg-gray-700 
@@ -597,7 +616,6 @@ export default function AccountPage() {
               </button>
               <button
                 onClick={ () => {
-                  fetchVotedCards();
                   setMyTop4Open(!showTop4);
                 }}
                 className="flex items-center justify-center gap-x-2 text-white font-semibold bg-black hover:bg-gray-700 
@@ -623,12 +641,13 @@ export default function AccountPage() {
                 setErrorMsg('');
               }}
             />
-            <div className="relative bg-white rounded-xl p-6 shadow-xl w-full max-w-md mx-4">
+            <div className="relative bg-white rounded-xl border border-gray-300 shadow-xl p-6 w-[350px] sm:w-full max-w-md">
               <h3 className="text-lg font-semibold text-center border-b pb-2">
                 プロフィールを編集
               </h3>
               <div className="text-center mt-4">
-                <div className="relative flex items-center justify-center overflow-hidden border-4 border-gray-200 rounded-full mx-auto w-32 h-32">
+                <div className="relative flex items-center justify-center overflow-hidden 
+                                border-4 border-gray-200 rounded-full mx-auto w-32 h-32">
                   {form.image_url ? (
                     <Image src={form.image_url} alt="Avatar Preview" fill className="object-cover" />
                   ) : (
@@ -650,7 +669,7 @@ export default function AccountPage() {
               {errorMsg && <p className="text-red-600 rounded bg-red-50 border border-red-300 p-2 mt-2">{errorMsg}</p>}
 
               <div className="mt-3">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="username" className="block text-base font-medium">
                   ユーザー名 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -661,7 +680,8 @@ export default function AccountPage() {
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   required
                   maxLength={20}
-                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent px-3 py-2 w-full"
+                  className=" border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
+                              focus:ring-blue-500 focus:border-transparent px-3 py-2 mt-1 w-full"
                   placeholder="ユーザー名を入力してください"
                 />
               </div>
@@ -676,7 +696,8 @@ export default function AccountPage() {
                     });
                     setErrorMsg('');
                   }}
-                  className="text-white font-semibold bg-gray-600 hover:bg-gray-400 transition duration-200 rounded-lg py-3 px-8 min-w-[150px] cursor-pointer"
+                  className="text-white font-semibold bg-gray-600 hover:bg-gray-400 
+                            transition duration-200 rounded-lg py-3 px-8 min-w-[150px] cursor-pointer"
                 >
                   <span>キャンセル</span>
                 </button>
@@ -701,14 +722,15 @@ export default function AccountPage() {
                 setSelectedCardIds([]); 
               }} 
             />
-            <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-5xl max-h-lg mx-10 max-h-[90vh] w-full overflow-y-auto">
-              <div className="flex justify-between">
-                <h3 className="text-xl font-semibold">投票カード一覧</h3>
-                <div className="flex">
+            <div className="relative bg-white rounded-xl border border-gray-300 shadow-xl p-6 max-w-5xl max-h-lg mx-2 sm:mx-10 max-h-[90vh] w-full overflow-y-auto">
+              <div className={`flex justify-between ${selectedCardIds.length > 0 ? "flex-col gap-y-2 sm:flex-row sm:gap-y-0" : "flex-row"}`}>
+                <h3 className="text-lg sm:text-xl font-semibold">投票カード一覧</h3>
+                <div className="flex gap-x-3">
                   {selectedCardIds.length > 0 && (
                     <button 
                       onClick={handleVoteDelete} 
-                      className="text-white rounded-lg font-semibold bg-red-600 hover:bg-red-700 transition duration-200 py-1 px-7 min-w-[150px] cursor-pointer"
+                      className="text-white rounded-lg font-semibold bg-red-600 hover:bg-red-700 transition duration-200 
+                                  py-1 sm:px-7 min-w-[150px] cursor-pointer"
                     >
                       投票を取り消す
                     </button>
@@ -717,58 +739,85 @@ export default function AccountPage() {
                     onClick={() => {
                       setShowVoted(false);
                       setSelectedCardIds([]);
+                      setGender("male");
                     }}
-                    className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 py-2 px-7 mx-3 cursor-pointer"
+                    className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 
+                                py-1 sm:py-2 px-4 sm:px-7 cursor-pointer"
                   >
                     閉じる
                   </button>
                 </div>
               </div>
+              <div className="mt-3">
+                <GenderTab
+                  value={gender} 
+                  onChange={(val) =>{
+                    setGender(val);
+                    setSelectedCardIds([]);
+                  }}
+                />
+              </div>
               <div className="border-t border-gray-300 border-radius mt-2"/>
-              {votedCards.length === 0 ? (
-                  <div className="flex justify-center items-center h-60 mt-2">
-                    <p className="text-xl text-gray-400">投票した対戦カードがありません</p>
+              { votedCardsloading ? (
+                  <div className="flex justify-center items-center my-20">
+                    <p className="text-gray-500">読み込み中...</p>
                   </div>
                 ) : (
-                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 mt-5 mx-3">
-                    {votedCards.map((card) => {
-                      return (
-                        <button
-                          key={card.id}
-                          onClick={() => toggleCardSelect(card.id)}
-                          className={`bg-gray-50 rounded-lg shadow border border-gray-200 px-3 py-2 h-[170px]
-                                      min-w-[300px] md:min-w-[200px] lg:min-w-[200px] cursor-pointer
-                                      ${selectedCardIds.includes(card.id) ? 'bg-red-100 border-red-300' : ''}`}
-                        >
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-x-3 h-[100px]">
-                              <div 
-                                className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden
-                                ${isSmallFont(card.fighter1?.name) ? "text-base" : "text-lg"}`}
-                              >
-                                {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
-                              </div>
-                              <span className="text-lg font-semibold">vs</span>
-                              <div 
-                                className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden 
-                                  ${isSmallFont(card.fighter2?.name) ? "text-base" : "text-lg"}`}
-                              >
-                                {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
-                              </div>
-                            </div>
-                            <div className="flex gap-x-3 mt-2">
-                              <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                {card.organization?.name}
-                              </span>
-                              <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                {card.weight_class?.name}
-                              </span>
+                  votedCards.length === 0 ? (
+                      <div className="flex justify-center items-center h-60 mt-2">
+                        <p className="text-base sm:text-xl text-gray-400">投票した対戦カードがありません</p>
+                      </div>
+                    ) : (
+                      (weightClasses || [])
+                      .filter(w => votedCards.some(card => card.weight_class?.name === w.name)) 
+                      .map((w) => {
+                        return(
+                          <div key={w.id} className="border-b border-gray-300 border-radius pb-6 mx-3">
+                            <h2 className="text-2xl font-bold mt-3">{w.name}</h2>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3 sm:mx-3">
+                              {votedCards.filter(card => card.weight_class?.name === w.name).map((card) => {
+                                return (
+                                  <button
+                                    key={card.id}
+                                    onClick={() => toggleCardSelect(card.id)}
+                                    className={`rounded-lg shadow border border-gray-200 px-3 py-2 h-[170px] cursor-pointer
+                                                shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
+                                                hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]
+                                                ${selectedCardIds.includes(card.id) ? 'text-black bg-red-100 border-red-300' : ''}`}
+                                  >
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-x-3 h-[100px]">
+                                        <div 
+                                          className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden
+                                          ${isSmallFont(card.fighter1?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
+                                        >
+                                          {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
+                                        </div>
+                                        <span className="text-lg font-semibold">vs</span>
+                                        <div 
+                                          className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden 
+                                            ${isSmallFont(card.fighter2?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
+                                        >
+                                          {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-x-3 mt-2">
+                                        <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                          {card.organization?.name}
+                                        </span>
+                                        <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                          {card.weight_class?.name}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </button>
+                                )
+                              })}
                             </div>
                           </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                        )
+                      })
+                    )
                 )
               }
             </div>
@@ -779,23 +828,25 @@ export default function AccountPage() {
         {showTop4 && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => { if (!isTop4Editing) setMyTop4Open(false) }} />
-            <div className="relative flex flex-col bg-white rounded-xl shadow-xl px-5 max-w-5xl max-h-lg mx-10 h-[90vh] w-full">
-              <div className="flex justify-between mx-4 mt-6 pb-4">
-                <h3 className="text-3xl font-semibold">MyTop4</h3>
-                <div className="flex items-center gap-3">
+            <div className="relative flex flex-col bg-white rounded-xl border border-gray-300 shadow-xl px-5 mx-1 sm:mx-10 max-h-[90vh] w-full">
+              <div className="flex justify-between sm:mx-4 mt-6 pb-4">
+                <h3 className="text-2xl  sm:text-3xl font-semibold">MyTop4</h3>
+                <div className="flex items-center gap-x-2 sm:gap-x-3">
                   {!isTop4Editing ? (
                     <>
                       {selectedTop4Slots.length > 0 ? (
                         <button 
                           onClick={handleTop4Delete} 
-                          className="text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition duration-200 py-2 px-4 cursor-pointer"
+                          className="text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition duration-200 
+                                    py-1 sm:py-2 px-3 sm:px-4 cursor-pointer"
                         >
                           Top4を解除
                         </button>
                       ) : (
                         <button
                           onClick={startTop4Edit}
-                          className="text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition duration-200 py-2 px-4 cursor-pointer"
+                          className="text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition duration-200 
+                                      py-1 sm:py-2 px-3 sm:px-4 cursor-pointer"
                         >
                           更新
                         </button>
@@ -806,8 +857,10 @@ export default function AccountPage() {
                           setMyTop4Open(false);
                           setSelectedTop4Slots([]);
                           setErrorMsg('');
+                          setGender("male");
                         }}
-                        className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 py-2 px-4 cursor-pointer"
+                        className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 
+                                    py-1 sm:py-2 px-3 sm:px-4 cursor-pointer"
                       >
                         閉じる
                       </button>
@@ -816,7 +869,8 @@ export default function AccountPage() {
                     <>
                       <button
                         onClick={saveTop4}
-                        className="text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-400 transition duration-200 py-2 px-4 cursor-pointer"
+                        className="text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-400 transition duration-200 
+                                    py-1 sm:py-2 px-3 sm:px-4 cursor-pointer"
                       >
                         保存
                       </button>
@@ -831,7 +885,8 @@ export default function AccountPage() {
                           setSelectedFighter(null);
                           setErrorMsg('');
                         }}
-                        className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 py-2 px-4 cursor-pointer"
+                        className="text-white font-semibold rounded-lg bg-gray-600 hover:bg-gray-400 transition duration-200 
+                                    py-1 sm:py-2 px-3 sm:px-4 cursor-pointer"
                       >
                         キャンセル
                       </button>
@@ -839,16 +894,18 @@ export default function AccountPage() {
                   )}
                 </div>
               </div>
-              {!isTop4Editing && (
-                <GenderTab
-                  value={gender} 
-                  onChange={(val) =>{
-                    setGender(val);
-                    setSelectedTop4Slots([]);
-                    setErrorMsg('');  
-                  }} 
-                />
-              )}
+              <div> 
+                {!isTop4Editing && (
+                  <GenderTab
+                    value={gender} 
+                    onChange={(val) =>{
+                      setGender(val);
+                      setSelectedTop4Slots([]);
+                      setErrorMsg('');  
+                    }}
+                  />
+                )}
+              </div>
               <p className="border-b border-gray-300"/>
               {/* Search area shown only in edit mode */}
               {isTop4Editing && (
@@ -857,7 +914,7 @@ export default function AccountPage() {
                     value={searchInput}
                     onChange={(e) => handleChange(e.target.value)}
                     placeholder="選手名を入力"
-                    className="border border-gray-300 rounded px-3 py-2 w-full"
+                    className="border border-gray-300  rounded px-3 py-2 w-full"
                   />
 
                   {/* Filetered fighter list */}
@@ -898,7 +955,7 @@ export default function AccountPage() {
                       >
                         <p 
                           className={`flex justify-center items-center font-semibold whitespace-pre-line break-keep overflow-hidden
-                                      rounded h-[80px] w-[210px] ${isSmallFont(selectedFighter.name) ? "text-lg" : "text-xl"} cursor-pointer`}
+                                      rounded h-[80px] w-[210px] ${isSmallFont(selectedFighter.name) ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"} cursor-pointer`}
                         >
                           {noBreakDots(insertLineBreak(selectedFighter.name, 10))}
                         </p>
@@ -911,7 +968,7 @@ export default function AccountPage() {
               {/* Top4 fighter slot area (droppable) */}
               <div className="flex-1 mt-4 overflow-auto">
                 { top4loading && weightClassesLoaded ? (
-                  <div className="flex justify-center items-center mt-20">
+                  <div className="flex justify-center items-center my-30">
                     <p className="text-gray-500">読み込み中...</p>
                   </div>
                 ) : (
@@ -939,8 +996,8 @@ export default function AccountPage() {
                               <span className="ember" style={{ left: "60%", top: "-14%", animationDelay: "0.45s" }} />
                               <span className="ember" style={{ left: "85%", top: "-6%", animationDelay: "0.9s" }} />
                               <p 
-                                className={`flex justify-center items-center text-center font-semibold whitespace-pre-line break-keep overflow-hidden
-                                            rounded px-2 py-1 ${isSmallFont(f.name) ? "text-xl" : "text-2xl"} h-full cursor-pointer`}
+                                className={`flex justify-center items-center text-center font-semibold  whitespace-pre-line break-keep overflow-hidden 
+                                            rounded px-2 py-1 ${isSmallFont(f.name) ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"} h-full cursor-pointer`}
                               >
                                 {noBreakDots(insertLineBreak(f.name, 9))}
                               </p>

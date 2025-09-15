@@ -15,8 +15,28 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #ffffff;
   }
+
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600,
+  .text-gray-700,
+  .text-gray-800 {
+    color: white !important;
+  }
+
+  .bg-black {
+    background-color: gray;
+  }
+  .bg-white {
+    background-color: rgb(0, 0, 0);
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: #374151; /* dark時用の色 (gray-700あたり) */
+  }
+
 }
 
 body {

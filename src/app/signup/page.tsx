@@ -69,17 +69,17 @@ export default function RegisterPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center mt-10">
+      <div className="container flex justify-center mx-auto mt-30">
         <p className="text-gray-500">アカウント作成中...</p>
       </div>
     );
   } 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-md rounded p-5 my-2 w-96 mx-10">
+    <div className="container flex justify-center py-8">
+      <div className="shadow-md rounded border border-gray-100 p-5 my-2 mx-5 sm:mx-10 w-96">
         <h2 className="text-center text-2xl font-bold">新規アカウント登録</h2>
-        <p className="text-center text-gray-600 mt-2">メールアドレスまたはGoogleアカウントで登録</p>
+        <p className="text-gray-600 mt-3">メールアドレスまたはGoogleアカウントで登録できます</p>
         {error && <p className="text-red-600 bg-red-50 rounded border border-red-300 p-2 mt-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mt-4">
@@ -92,7 +92,7 @@ export default function RegisterPage() {
               className="border border-gray-300 rounded px-3 py-2 mt-1 w-full"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">メールアドレスの@より前の部分がデフォルトのユーザーIDとして使用されます</p>
+            <p className="text-xs text-gray-500 mt-1">メールアドレスの@より前の部分が初期のアカウント名として使用されます</p>
           </div>
 
           <div className="mt-4">
@@ -126,8 +126,8 @@ export default function RegisterPage() {
               className="mr-2 cursor-pointer"
             />
             <span className="text-sm">
-              <Link href="/terms" className="text-blue-600 hover:underline">利用規約</Link>と{' '}
-              <Link href="/privacy" className="text-blue-600 hover:underline">プライバシーポリシー</Link>に同意する
+              <Link href="/terms" className="text-blue-600 hover:underline">利用規約</Link>と
+              <Link href="/privacy" className="text-blue-600 hover:underline">プライバシーポリシー</Link>に同意
             </span>
           </div>
 
@@ -147,8 +147,8 @@ export default function RegisterPage() {
           <FaGoogle className="mr-2"/>Googleで登録
         </button>
 
-        <div className="text-center text-sm mt-4">
-          すでにアカウントをお持ちの場合は{' '}
+        <div className="text-sm mt-4">
+          すでにアカウントをお持ちの場合{' '}
           <Link href="/login" className="text-blue-600 hover:underline">ログイン</Link>
         </div>
       </div>
