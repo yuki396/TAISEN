@@ -28,8 +28,8 @@ export default function HomeClient({ initialFightCards, initialVotedCards }: { i
           id="top4-page-help"
           content={
             <div className="whitespace-pre-line">
-              ＊選手名を選択することで、あなたの勝敗<br />　予想が反映され、ランキングが変動します<br />
-              ＊投票アイコンを押すことで、あなたの投票<br />　が反映され、％が変動します<br />
+              ＊選手名を選択することで、あなたの勝敗<br />　予想が反映され、％が変動します<br />
+              ＊投票アイコンを押すことで、あなたの投票<br />　が反映され、ランキングが変動します<br />
               ＊投票した対戦カードは、マイページから<br />　確認できます<br />
             </div>
           }
