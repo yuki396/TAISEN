@@ -25,6 +25,7 @@ import { isSmallFont, insertLineBreak, noBreakDots } from '@/utils/textUtils';
 export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [votedCardsloading, setvotedCardsloading] = useState(true);
+  const [votedCardsDeleting, setvotedCardsDeleting] = useState(false);
   const [top4loading, setTop4Loading] = useState(true);
   const [top4Saving, setTop4Saving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -320,6 +321,7 @@ export default function AccountPage() {
   // For deleting popularity vote
   const handleVoteDelete = async () => {
     try {
+      setvotedCardsDeleting(true)
       // Delete votes for selected fight cards
       const { votesError } = await deletePopuralityVotes(userId, selectedCardIds);
 
@@ -336,6 +338,8 @@ export default function AccountPage() {
     } catch (e: unknown) {
       console.error('Unexpected error during deleting votes : ', e);
       setErrorMsg('不明なエラーが発生しました。しばらくしてから再試行してください。');
+    } finally {
+      setvotedCardsDeleting(false)
     }
   };
 
@@ -754,68 +758,73 @@ export default function AccountPage() {
                 />
               </div>
               <div className="border-t border-gray-300 border-radius mt-2"/>
-              { votedCardsloading ? (
+              { votedCardsDeleting ? (
+                <div className="flex justify-center items-center my-20">
+                  <p className="text-gray-500">取消中...</p>
+                </div>              
+              ) : (
+                votedCardsloading ? (
                   <div className="flex justify-center items-center my-20">
                     <p className="text-gray-500">読み込み中...</p>
                   </div>
                 ) : (
                   votedCards.length === 0 ? (
-                      <div className="flex justify-center items-center h-60 mt-2">
-                        <p className="text-base sm:text-xl text-gray-400">投票した対戦カードがありません</p>
-                      </div>
-                    ) : (
-                      (weightClasses || [])
-                      .filter(w => votedCards.some(card => card.weight_class?.name === w.name)) 
-                      .map((w) => {
-                        return(
-                          <div key={w.id} className="border-b border-gray-300 border-radius pb-6 mx-3">
-                            <h2 className="text-2xl font-bold mt-3">{w.name}</h2>
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3 sm:mx-3">
-                              {votedCards.filter(card => card.weight_class?.name === w.name).map((card) => {
-                                return (
-                                  <button
-                                    key={card.id}
-                                    onClick={() => toggleCardSelect(card.id)}
-                                    className={`rounded-lg shadow border border-gray-200 px-3 py-2 h-[170px] cursor-pointer
-                                                shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
-                                                hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]
-                                                ${selectedCardIds.includes(card.id) ? 'bg-red-50 border-2 border-red-300' : ''}`}
-                                  >
-                                    <div className="flex flex-col">
-                                      <div className="flex items-center gap-x-3 h-[100px]">
-                                        <div 
-                                          className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden
-                                          ${isSmallFont(card.fighter1?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
-                                        >
-                                          {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
-                                        </div>
-                                        <span className="text-lg font-semibold">vs</span>
-                                        <div 
-                                          className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden 
-                                            ${isSmallFont(card.fighter2?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
-                                        >
-                                          {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
-                                        </div>
+                    <div className="flex justify-center items-center h-60 mt-2">
+                      <p className="text-base sm:text-xl text-gray-400">投票した対戦カードがありません</p>
+                    </div>
+                  ) : (
+                    (weightClasses || [])
+                    .filter(w => votedCards.some(card => card.weight_class?.name === w.name)) 
+                    .map((w) => {
+                      return(
+                        <div key={w.id} className="border-b border-gray-300 border-radius pb-6 mx-3">
+                          <h2 className="text-2xl font-bold mt-3">{w.name}</h2>
+                          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3 sm:mx-3">
+                            {votedCards.filter(card => card.weight_class?.name === w.name).map((card) => {
+                              return (
+                                <button
+                                  key={card.id}
+                                  onClick={() => toggleCardSelect(card.id)}
+                                  className={`rounded-lg shadow border border-gray-200 px-3 py-2 h-[170px] cursor-pointer
+                                              shadow-[0_-2px_6px_rgba(255,0,0,0.4),0_2px_6px_rgba(255,0,0,0.4)] 
+                                              hover:shadow-[0_-4px_12px_rgba(255,0,0,0.8),0_4px_12px_rgba(255,0,0,0.8)]
+                                              ${selectedCardIds.includes(card.id) ? 'bg-red-50 border-2 border-red-300' : ''}`}
+                                >
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-x-3 h-[100px]">
+                                      <div 
+                                        className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden
+                                        ${isSmallFont(card.fighter1?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
+                                      >
+                                        {noBreakDots(insertLineBreak(card.fighter1?.name, 6))}
                                       </div>
-                                      <div className="flex gap-x-3 mt-2">
-                                        <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                          {card.organization?.name}
-                                        </span>
-                                        <span className="text-black bg-gray-100 rounded px-1 py-1">
-                                          {card.weight_class?.name}
-                                        </span>
+                                      <span className="text-lg font-semibold">vs</span>
+                                      <div 
+                                        className={`flex-1 font-semibold rounded whitespace-pre-line break-keep overflow-hidden 
+                                          ${isSmallFont(card.fighter2?.name) ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}
+                                      >
+                                        {noBreakDots(insertLineBreak(card.fighter2?.name, 6))}
                                       </div>
                                     </div>
-                                  </button>
-                                )
-                              })}
-                            </div>
+                                    <div className="flex gap-x-3 mt-2">
+                                      <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                        {card.organization?.name}
+                                      </span>
+                                      <span className="text-black bg-gray-100 rounded px-1 py-1">
+                                        {card.weight_class?.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </button>
+                              )
+                            })}
                           </div>
-                        )
-                      })
-                    )
+                        </div>
+                      )
+                    })
+                  )
                 )
-              }
+              )}
             </div>
           </div>
         )}
@@ -912,10 +921,6 @@ export default function AccountPage() {
                     placeholder="選手名を入力"
                     className="border border-gray-300  rounded px-3 py-2 w-full"
                   />
-                  <p className="text-sm mt-1">
-                    <span className="hidden sm:inline text-gray-500">＊選手カードをドラックし、Top4枠にドロップできます</span>
-                    <span className="inline sm:hidden text-gray-500">＊選手カードを長押しするとドラック状態に<br />　なり、Top4枠にドロップできます</span>
-                  </p>
                   {/* Filetered fighter list */}
                   {searchOpen && filtered.length > 0 && (
                     <ul className="z-20 bg-white rounded shadow border border-gray-300 mt-1 w-full max-h-60 overflow-auto">
@@ -934,14 +939,21 @@ export default function AccountPage() {
                       ))}
                     </ul>
                   )}
-
                   {searchOpen && searchInput && filtered.length === 0 && (
                     <div className="z-10 text-gray-500 bg-white rounded border border-gray-300 px-3 py-2 mt-1 w-full">
                       該当なし
                     </div>
                   )}
+
                   {errorMsg && (
                     <div className="text-red-600 border border-red-300 bg-red-50 rounded p-2 mt-3 mx-2">{errorMsg}</div>
+                  )}
+
+                  {!searchOpen && !searchInput && (
+                  <p className="text-sm mt-1">
+                    <span className="hidden sm:inline text-gray-500">＊選手カードをドラックし、Top4枠にドロップできます</span>
+                    <span className="inline sm:hidden text-gray-500">＊選手カードを長押しするとドラック状態に<br />　なり、Top4枠にドロップできます</span>
+                  </p>
                   )}
 
                   {/* Seclected fighter (draggable) */}
